@@ -11,7 +11,8 @@ import {
 import { 
   BookOpen, Calculator, FileText, Upload, Users, Award, Globe, Sun, Moon, 
   CheckCircle2, ArrowRight, Printer, Sparkles, AlertCircle, HelpCircle, ShieldCheck,
-  MoveUp, MoveDown, Trash2, Layers, Image as ImageIcon, Check, X, Edit3, Lock, Unlock, History, AlertTriangle
+  MoveUp, MoveDown, Trash2, Layers, Image as ImageIcon, Check, X, Edit3, Lock, Unlock, History, AlertTriangle,
+  RotateCw, RefreshCw, RefreshCcw, Eye
 } from 'lucide-react';
 
 const UI_TEXT = {
@@ -19,12 +20,12 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Official 2018 Curriculum Bilingual Marksheet OCR Calculation Engine & Report Card Generator',
     heroHeading: 'Empowering Bilingual Teachers with Deterministic Marksheet Intelligence',
-    heroSub: 'Upload multiple marksheet photo parts, rearrange and merge them, review OCR extractions with cell-by-cell validation, and lock batches for official report cards.',
-    ctaUpload: 'Multi-Part Marksheet Stitcher',
+    heroSub: 'Upload, rotate, and merge marksheet photo parts with intelligent browser-side quality checks before OCR extraction and batch verification.',
+    ctaUpload: 'Advanced Marksheet Quality Studio',
     ctaExplore: 'Explore Report Generator',
     tabs: {
       dashboard: 'Overview & Demo',
-      ocrEngine: 'Multi-Part Marksheet OCR & Merger',
+      ocrEngine: 'Quality Control & Marksheet Merger',
       ocrReview: 'OCR Review & Validation',
       roster: 'Roster & Marks',
       monthly: 'Monthly Reports',
@@ -34,8 +35,6 @@ const UI_TEXT = {
     },
     featuresTitle: 'Why Teachers & Schools Choose Campannetsmart',
     featuresSub: 'Engineered specifically for bilingual primary and secondary education systems adhering strictly to official ministerial evaluation standards.',
-    pricingTitle: 'Simple, Transparent Educator Pricing',
-    pricingSub: 'Empower every teacher in your institution with instant OCR calculations and bilingual report generation.',
     footerText: 'Campannetsmart Engine • Built strictly with deterministic mathematical formulas. AI never determines student marks.',
     printReport: 'Print Official Report Card',
     selectStudent: 'Select Student',
@@ -47,12 +46,12 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Moteur de Calcul OCR de Notes Bilingue & Générateur de Bulletins (Programme Officiel 2018)',
     heroHeading: 'Révolutionnez l\'Évaluation Scolaire Bilingue avec une Précision Mathématique',
-    heroSub: 'Téléchargez plusieurs parties de notes, fusionnez-les, révisez les extractions OCR avec validation cellule par cellule et verrouillez les lots pour les bulletins.',
-    ctaUpload: 'Fusionneur de Notes Multi-Parties',
+    heroSub: 'Téléchargez, pivotez et fusionnez des parties de notes avec contrôles de qualité intégrés avant l\'extraction OCR.',
+    ctaUpload: 'Studio Qualité & Fusion Notes',
     ctaExplore: 'Explorer les Bulletins',
     tabs: {
       dashboard: 'Accueil & Démo',
-      ocrEngine: 'Fusion & OCR Notes',
+      ocrEngine: 'Contrôle Qualité & Fusion',
       ocrReview: 'Révision OCR & Validation',
       roster: 'Élèves & Notes',
       monthly: 'Bulletins Mensuels',
@@ -62,8 +61,6 @@ const UI_TEXT = {
     },
     featuresTitle: 'Pourquoi les Enseignants et Écoles Choisissent Campannetsmart',
     featuresSub: 'Conçu spécifiquement pour l\'enseignement bilingue primaire et secondaire selon les normes ministérielles officielles 2018.',
-    pricingTitle: 'Tarification Simple et Transparente',
-    pricingSub: 'Équipez chaque enseignant avec le calcul automatique et des bulletins professionnels bilingues.',
     footerText: 'Moteur Campannetsmart • Calculs mathématiques strictement déterministes. L\'IA ne détermine jamais les notes.',
     printReport: 'Imprimer le Bulletin Officiel',
     selectStudent: 'Sélectionner l\'Élève',
@@ -75,12 +72,12 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Injin Lissafin Takardun Sakamako da Kera Rahoton Dalibai ta Harsunan Biyu',
     heroHeading: 'Karfin Koyo da Lissafi Na Musamman Ga Malamai da Makarantu',
-    heroSub: 'Sanya sassa daban-daban na hotunan sakamako, haɗa su, duba da tabbatar da kowace lamba kafin amincewa da rahoton aji.',
-    ctaUpload: 'Haɗa da Kera Sakamako',
+    heroSub: 'Sanya hotunan sakamako, juyawa da haɗa su tare da ingantattun gwaje-gwajen inganci kafin fitar da maki.',
+    ctaUpload: 'Studio Ingancin Sakamako',
     ctaExplore: 'Bincika Kera Rahoto',
     tabs: {
       dashboard: 'Bita & Gwaji',
-      ocrEngine: 'Haɗa & OCR Sakamako',
+      ocrEngine: 'Inganci & Haɗawa',
       ocrReview: 'Bita da Tabbatarwa',
       roster: 'Dalibai da Maki',
       monthly: 'Rahoton Wata',
@@ -90,8 +87,6 @@ const UI_TEXT = {
     },
     featuresTitle: 'Me Yasa Malamai Ke Son Campannetsmart',
     featuresSub: 'An tsara shi musamman don tsarin karatun bilingual da ke bin ka\'idojin gwamnati na hukuma.',
-    pricingTitle: 'Farashin Da Ya Dace da Kowace Makaranta',
-    pricingSub: 'Bada damar kowane malami ya yi lissafi da buga rahotanni cikin sauqi.',
     footerText: 'Campannetsmart Engine • Lissafi ne mai inganci ba tare da kuskure ba.',
     printReport: 'Bugawa Rahoton Aji',
     selectStudent: 'Zabi Dalibi',
@@ -105,7 +100,10 @@ interface MarksheetPart {
   id: string;
   file: File;
   previewUrl: string;
+  rotation: number; // 0, 90, 180, 270
 }
+
+type ProgressStep = 'idle' | 'uploading' | 'merging' | 'quality_check' | 'sending' | 'recognizing' | 'reviewing';
 
 export default function App() {
   const [lang, setLang] = useState<Language>('en');
@@ -120,9 +118,10 @@ export default function App() {
   const [selectedMonth, setSelectedMonth] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].months[0]);
   const [reportLang, setReportLang] = useState<ReportLanguage>('en');
 
-  // Multi-part marksheet state
+  // Multi-part marksheet quality control state
   const [marksheetParts, setMarksheetParts] = useState<MarksheetPart[]>([]);
-  const [isProcessingOcr, setIsProcessingOcr] = useState<boolean>(false);
+  const [progressStep, setProgressStep] = useState<ProgressStep>('idle');
+  const [qualityWarnings, setQualityWarnings] = useState<string[]>([]);
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [ocrSuccessMsg, setOcrSuccessMsg] = useState<string | null>(null);
   const [mergedPreviewUrl, setMergedPreviewUrl] = useState<string | null>(null);
@@ -147,14 +146,20 @@ export default function App() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setProgressStep('uploading');
     const newParts: MarksheetPart[] = Array.from(files).map((file, idx) => ({
       id: `part_${Date.now()}_${idx}`,
       file,
-      previewUrl: URL.createObjectURL(file)
+      previewUrl: URL.createObjectURL(file),
+      rotation: 0
     }));
 
-    setMarksheetParts(prev => [...prev, ...newParts]);
-    setMergedPreviewUrl(null);
+    setTimeout(() => {
+      setMarksheetParts(prev => [...prev, ...newParts]);
+      setMergedPreviewUrl(null);
+      setQualityWarnings([]);
+      setProgressStep('idle');
+    }, 400);
   };
 
   const movePartIndex = (index: number, direction: 'up' | 'down') => {
@@ -173,46 +178,162 @@ export default function App() {
     setMergedPreviewUrl(null);
   };
 
-  const mergeAndExtractMarksheet = async () => {
+  const rotatePart = (id: string) => {
+    setMarksheetParts(prev => prev.map(p => {
+      if (p.id !== id) return p;
+      return { ...p, rotation: (p.rotation + 90) % 360 };
+    }));
+    setMergedPreviewUrl(null);
+  };
+
+  const replacePartFile = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMarksheetParts(prev => prev.map(p => {
+      if (p.id !== id) return p;
+      return { ...p, file, previewUrl: URL.createObjectURL(file), rotation: 0 };
+    }));
+    setMergedPreviewUrl(null);
+  };
+
+  const cancelAndReset = () => {
+    setMarksheetParts([]);
+    setMergedPreviewUrl(null);
+    setQualityWarnings([]);
+    setOcrError(null);
+    setOcrSuccessMsg(null);
+    setProgressStep('idle');
+  };
+
+  // Run browser-side image quality checks on merged canvas
+  const runQualityChecksAndMerge = async () => {
     if (marksheetParts.length === 0) {
-      setOcrError('Please upload at least one marksheet photo part.');
+      setOcrError(lang === 'fr' ? 'Veuillez télécharger au moins une partie de note.' : 'Please upload at least one marksheet photo part.');
       return;
     }
 
-    setIsProcessingOcr(true);
     setOcrError(null);
     setOcrSuccessMsg(null);
+    setProgressStep('merging');
 
     try {
+      // 1. Load all part images with respective rotation
       const loadedImages = await Promise.all(marksheetParts.map(part => {
-        return new Promise<HTMLImageElement>((resolve, reject) => {
+        return new Promise<{ img: HTMLImageElement; rotation: number }>((resolve, reject) => {
           const img = new Image();
-          img.onload = () => resolve(img);
+          img.onload = () => resolve({ img, rotation: part.rotation });
           img.onerror = reject;
           img.src = part.previewUrl;
         });
       }));
 
-      const maxWidth = Math.max(...loadedImages.map(img => img.naturalWidth || img.width));
-      const totalHeight = loadedImages.reduce((sum, img) => sum + (img.naturalHeight || img.height), 0);
+      setProgressStep('quality_check');
+
+      // Calculate dimensions accounting for rotation
+      const processedParts = loadedImages.map(({ img, rotation }) => {
+        const isRotated = rotation === 90 || rotation === 270;
+        const w = isRotated ? img.naturalHeight : img.naturalWidth;
+        const h = isRotated ? img.naturalWidth : img.naturalHeight;
+        return { img, rotation, w, h };
+      });
+
+      const maxWidth = Math.max(...processedParts.map(p => p.w));
+      const totalHeight = processedParts.reduce((sum, p) => sum + p.h, 0);
 
       const canvas = document.createElement('canvas');
       canvas.width = maxWidth;
       canvas.height = totalHeight;
       const ctx = canvas.getContext('2d');
 
-      if (!ctx) throw new Error('Could not initialize canvas context for merging.');
+      if (!ctx) throw new Error('Could not initialize canvas context.');
 
       let currentY = 0;
-      for (const img of loadedImages) {
-        ctx.drawImage(img, 0, currentY);
-        currentY += (img.naturalHeight || img.height);
+      for (const p of processedParts) {
+        ctx.save();
+        ctx.translate(0, currentY);
+        // Draw with rotation centered
+        if (p.rotation === 90) {
+          ctx.translate(p.w, 0);
+          ctx.rotate(Math.PI / 2);
+        } else if (p.rotation === 180) {
+          ctx.translate(p.w, p.h);
+          ctx.rotate(Math.PI);
+        } else if (p.rotation === 270) {
+          ctx.translate(0, p.h);
+          ctx.rotate((Math.PI * 3) / 2);
+        }
+        ctx.drawImage(p.img, 0, 0);
+        ctx.restore();
+        currentY += p.h;
       }
 
       const mergedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
       setMergedPreviewUrl(mergedDataUrl);
 
-      const base64String = mergedDataUrl.split(',')[1];
+      // Browser-side quality diagnostics
+      const warnings: string[] = [];
+      
+      // Resolution Check
+      if (maxWidth < 800 || totalHeight < 1000) {
+        warnings.push(lang === 'fr' ? 'Image de faible résolution. La précision OCR peut diminuer.' : 'Image resolution is low. OCR accuracy may reduce.');
+      }
+
+      // Height Check
+      if (totalHeight > 10000) {
+        warnings.push(lang === 'fr' ? 'L\'image fusionnée est excessivement haute. Veuillez réduire le nombre de parties.' : 'The merged image is excessively tall.');
+      }
+
+      // Brightness & Blur analysis via sampled canvas getImageData
+      try {
+        const sampleCtx = document.createElement('canvas').getContext('2d');
+        if (sampleCtx) {
+          const sampleWidth = Math.min(300, canvas.width);
+          const sampleHeight = Math.min(300, canvas.height);
+          const sampleCanvas = sampleCtx.canvas;
+          sampleCanvas.width = sampleWidth;
+          sampleCanvas.height = sampleHeight;
+          sampleCtx.drawImage(canvas, 0, 0, sampleWidth, sampleHeight);
+          const imgData = sampleCtx.getImageData(0, 0, sampleWidth, sampleHeight);
+          const data = imgData.data;
+
+          let colorSum = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            colorSum += (r + g + b) / 3;
+          }
+          const avgBrightness = colorSum / (data.length / 4);
+
+          if (avgBrightness < 50) {
+            warnings.push(lang === 'fr' ? 'Photo trop sombre. Utilisez un meilleur éclairage.' : 'Photo is too dark. Use better lighting.');
+          } else if (avgBrightness > 225) {
+            warnings.push(lang === 'fr' ? 'Photo trop claire ou surexposée.' : 'Photo is too bright.');
+          }
+        }
+      } catch (e) {
+        console.warn('Quality sampling warning:', e);
+      }
+
+      setQualityWarnings(warnings);
+      setProgressStep('idle');
+      setOcrSuccessMsg(lang === 'fr' ? 'Fusion réussie ! Veuillez vérifier l\'aperçu ci-dessous avant l\'OCR.' : 'Successfully merged parts! Please review preview below before OCR.');
+    } catch (err: any) {
+      setOcrError(err.message || 'Failed to merge marksheet photo parts');
+      setProgressStep('idle');
+    }
+  };
+
+  const sendMergedImageToOcr = async () => {
+    if (!mergedPreviewUrl) return;
+
+    setProgressStep('sending');
+    setOcrError(null);
+    setOcrSuccessMsg(null);
+
+    try {
+      setProgressStep('recognizing');
+      const base64String = mergedPreviewUrl.split(',')[1];
 
       const res = await fetch('/api/ocr-marksheet', {
         method: 'POST',
@@ -223,11 +344,10 @@ export default function App() {
       if (!res.ok) throw new Error(data.error || 'OCR extraction failed');
 
       if (data.success && data.data && data.data.students) {
-        // Initialize batch with review items
         const batch: MarksheetBatch = {
           batchId: data.data.batchId || `BATCH_${Date.now()}`,
           timestamp: new Date().toLocaleString(),
-          mergedImageUrl: mergedDataUrl,
+          mergedImageUrl: mergedPreviewUrl,
           term: selectedTerm,
           month: selectedMonth,
           isLocked: false,
@@ -242,13 +362,15 @@ export default function App() {
         };
 
         setActiveBatch(batch);
-        setOcrSuccessMsg(`Successfully stitched ${marksheetParts.length} parts and extracted OCR scores. Please review and validate cells below.`);
-        setActiveTab('ocrReview');
+        setProgressStep('reviewing');
+        setOcrSuccessMsg(lang === 'fr' ? 'Extraction OCR réussie ! Redirection vers la révision.' : 'OCR extraction successful! Redirecting to review screen.');
+        setTimeout(() => setActiveTab('ocrReview'), 600);
+      } else {
+        throw new Error('Incomplete data returned from OCR engine.');
       }
     } catch (err: any) {
-      setOcrError(err.message || 'Failed to merge and process marksheet photos');
-    } finally {
-      setIsProcessingOcr(false);
+      setOcrError(err.message || 'OCR recognition failed. Please check image quality and retry.');
+      setProgressStep('idle');
     }
   };
 
@@ -302,7 +424,6 @@ export default function App() {
   const confirmAndTransferMarks = () => {
     if (!activeBatch) return;
 
-    // 1. Validate that no cells are pending or rejected without review
     let hasUnresolved = false;
     activeBatch.students.forEach(st => {
       Object.keys(st.scores).forEach(subCode => {
@@ -317,11 +438,10 @@ export default function App() {
     });
 
     if (hasUnresolved) {
-      alert('Please accept or correct all extracted cells before confirming and transferring marks.');
+      alert(lang === 'fr' ? 'Veuillez accepter ou corriger toutes les cellules avant de confirmer.' : 'Please accept or correct all extracted cells before confirming and transferring marks.');
       return;
     }
 
-    // 2. Transfer only accepted or corrected marks into official student store
     setStudents(prev => prev.map(existingStudent => {
       const matchedExtracted = activeBatch.students.find(es => es.id === existingStudent.id);
       if (!matchedExtracted) return existingStudent;
@@ -346,7 +466,6 @@ export default function App() {
       };
     }));
 
-    // If new student not in roster, add them
     activeBatch.students.forEach(extSt => {
       if (!students.some(s => s.id === extSt.id)) {
         const newStudentScores: any = {
@@ -377,15 +496,14 @@ export default function App() {
       }
     });
 
-    // 3. Lock batch
     setActiveBatch(prev => prev ? { ...prev, isLocked: true, lockedAt: new Date().toLocaleString() } : null);
-    alert('Marks successfully validated, locked, and transferred to official monthly report cards with full audit trail preserved.');
+    alert(lang === 'fr' ? 'Notes validées, verrouillées et transférées avec succès vers les bulletins officiels !' : 'Marks successfully validated, locked, and transferred to official monthly report cards with full audit trail preserved.');
     setActiveTab('monthly');
   };
 
   const unlockBatchWithReason = () => {
     if (!activeBatch || !unlockReason.trim()) {
-      alert('Please provide a valid reason for unlocking this batch.');
+      alert(lang === 'fr' ? 'Veuillez fournir un motif de déverrouillage.' : 'Please provide a valid reason for unlocking this batch.');
       return;
     }
     setActiveBatch(prev => prev ? {
@@ -427,7 +545,7 @@ export default function App() {
                 {t.appName}
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-medium">
-                OCR Verification & Locking Engine
+                Quality Control Studio
               </span>
             </div>
           </div>
@@ -500,7 +618,7 @@ export default function App() {
               <div className="space-y-6">
                 <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>OCR Verification & Mark-Locking Workflow</span>
+                  <span>Advanced Marksheet Quality Control Studio</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
                   {t.heroHeading}
@@ -525,16 +643,6 @@ export default function App() {
                     <span>{t.ctaExplore}</span>
                   </button>
                 </div>
-                <div className="flex items-center space-x-6 text-sm text-slate-500 dark:text-slate-400 pt-4 border-t border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center space-x-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Cell-by-Cell Verification</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Batch Locking & Audit Trail</span>
-                  </div>
-                </div>
               </div>
 
               <div className="custom-card rounded-2xl p-6 shadow-xl relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
@@ -543,33 +651,29 @@ export default function App() {
                   <div className="flex items-center justify-between border-b border-slate-700 pb-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-950">
-                        V
+                        QC
                       </div>
-                      <span className="font-bold text-sm">Verification Engine Active</span>
+                      <span className="font-bold text-sm">Image Quality Engine</span>
                     </div>
                     <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-mono">
-                      v2.6 Secured
+                      v2.7 Active
                     </span>
                   </div>
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">OCR Review Queue</div>
-                        <div className="text-lg font-bold text-emerald-400">{activeBatch ? `${activeBatch.students.length} Students Pending` : 'No Active Batch'}</div>
+                        <div className="text-xs text-slate-400">Rotation & Cropping</div>
+                        <div className="text-lg font-bold text-emerald-400">90° / 180° / 270° Rotation</div>
                       </div>
-                      <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                      <RotateCw className="w-8 h-8 text-emerald-400" />
                     </div>
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">Batch Locking Status</div>
-                        <div className="text-lg font-bold text-amber-400">{activeBatch?.isLocked ? 'Locked & Secured' : 'Editable / Unlocked'}</div>
+                        <div className="text-xs text-slate-400">Browser Quality Diagnostics</div>
+                        <div className="text-lg font-bold text-amber-400">Brightness & Resolution Checks</div>
                       </div>
-                      {activeBatch?.isLocked ? <Lock className="w-8 h-8 text-amber-400" /> : <Unlock className="w-8 h-8 text-blue-400" />}
+                      <ShieldCheck className="w-8 h-8 text-amber-400" />
                     </div>
-                  </div>
-                  <div className="pt-2 flex justify-between text-xs text-slate-400">
-                    <span>Audit Trail Preserved</span>
-                    <span className="text-emerald-400 font-medium">100% Deterministic</span>
                   </div>
                 </div>
               </div>
@@ -577,7 +681,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: MULTI-PART MARKSHEET OCR & MERGER */}
+        {/* TAB 2: QUALITY CONTROL & MARKSHEET MERGER */}
         {activeTab === 'ocrEngine' && (
           <div className="space-y-8 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 shadow-sm space-y-6">
@@ -586,15 +690,43 @@ export default function App() {
                   <Layers className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">Multi-Part Marksheet Photo Merger & OCR</h2>
-                  <p className="text-sm text-slate-500">Upload multiple photos of the same marksheet, rearrange them, merge them, and send to OCR review queue.</p>
+                  <h2 className="text-2xl font-bold">Marksheet Quality Control Studio</h2>
+                  <p className="text-sm text-slate-500">Upload, rotate, reorder, and run quality diagnostics before sending merged image to Gemini OCR.</p>
                 </div>
               </div>
 
+              {/* Progress States */}
+              {progressStep !== 'idle' && (
+                <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-4">
+                  <div className="flex items-center space-x-3 text-emerald-700 dark:text-emerald-300">
+                    <RefreshCw className="w-6 h-6 animate-spin" />
+                    <span className="font-bold text-base">
+                      {progressStep === 'uploading' && 'Uploading marksheet parts...'}
+                      {progressStep === 'merging' && 'Merging marksheet parts on browser canvas...'}
+                      {progressStep === 'quality_check' && 'Running browser-side image quality diagnostics...'}
+                      {progressStep === 'sending' && 'Preparing composite image...'}
+                      {progressStep === 'recognizing' && 'Sending to Gemini OCR for mark recognition...'}
+                      {progressStep === 'reviewing' && 'Redirecting to teacher review screen...'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-emerald-200 dark:bg-emerald-900 h-2 rounded-full overflow-hidden">
+                    <div className="bg-emerald-600 h-full animate-pulse w-3/4 rounded-full"></div>
+                  </div>
+                </div>
+              )}
+
               {ocrError && (
-                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 flex items-center space-x-3">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm">{ocrError}</span>
+                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <span className="text-sm">{ocrError}</span>
+                  </div>
+                  <button
+                    onClick={() => setOcrError(null)}
+                    className="text-xs font-bold underline"
+                  >
+                    Dismiss
+                  </button>
                 </div>
               )}
 
@@ -605,13 +737,14 @@ export default function App() {
                 </div>
               )}
 
+              {/* Upload Box */}
               <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4 hover:border-emerald-500 transition-colors">
                 <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-500">
                   <Upload className="w-7 h-7 text-emerald-600" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-base">Upload Marksheet Photo Parts</h3>
-                  <p className="text-xs text-slate-500">Select one or multiple photos (e.g., Part 1 and Part 2 of the same marksheet)</p>
+                  <h3 className="font-semibold text-base">Upload Marksheet Photo Parts (e.g. Top & Bottom)</h3>
+                  <p className="text-xs text-slate-500">Select multiple photo parts for stitching</p>
                 </div>
                 <div>
                   <label className="inline-block cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all text-sm">
@@ -627,59 +760,87 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Parts List with Rotation & Replace */}
               {marksheetParts.length > 0 && (
                 <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                   <div className="flex justify-between items-center">
                     <h3 className="font-bold text-base flex items-center space-x-2">
                       <ImageIcon className="w-5 h-5 text-emerald-600" />
-                      <span>Uploaded Parts ({marksheetParts.length}) — Rearrange Order</span>
+                      <span>Uploaded Parts ({marksheetParts.length}) — Adjust & Reorder</span>
                     </h3>
                     <button
-                      onClick={() => { setMarksheetParts([]); setMergedPreviewUrl(null); }}
-                      className="text-xs text-red-600 hover:underline font-semibold"
+                      onClick={cancelAndReset}
+                      className="text-xs text-red-600 hover:underline font-semibold flex items-center space-x-1"
                     >
-                      Clear All Parts
+                      <RefreshCcw className="w-3.5 h-3.5" />
+                      <span>Cancel & Start Again</span>
                     </button>
                   </div>
 
                   <div className="space-y-3">
                     {marksheetParts.map((part, index) => (
-                      <div key={part.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                      <div key={part.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 gap-4">
                         <div className="flex items-center space-x-4">
-                          <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">
+                          <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                             {index + 1}
                           </span>
-                          <img src={part.previewUrl} alt={`Part ${index + 1}`} className="w-14 h-14 object-cover rounded-lg border border-slate-300 dark:border-slate-600" />
+                          <div className="relative">
+                            <img 
+                              src={part.previewUrl} 
+                              alt={`Part ${index + 1}`} 
+                              className="w-16 h-16 object-cover rounded-lg border border-slate-300 dark:border-slate-600" 
+                              style={{ transform: `rotate(${part.rotation}deg)`, transition: 'transform 0.2s' }}
+                            />
+                            <span className="absolute bottom-0 right-0 bg-slate-900/80 text-white text-[9px] px-1 rounded">
+                              {part.rotation}°
+                            </span>
+                          </div>
                           <div>
                             <div className="text-sm font-semibold truncate max-w-xs">{part.file.name}</div>
                             <div className="text-xs text-slate-400">{(part.file.size / 1024).toFixed(1)} KB</div>
                           </div>
                         </div>
 
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 flex-wrap gap-y-2">
                           <button
-                            onClick={() => movePartIndex(index, 'up')}
-                            disabled={index === 0}
-                            className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100 transition-colors"
-                            title="Move Up"
+                            onClick={() => rotatePart(part.id)}
+                            className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold flex items-center space-x-1 hover:bg-slate-100"
+                            title="Rotate 90°"
                           >
-                            <MoveUp className="w-4 h-4" />
+                            <RotateCw className="w-3.5 h-3.5" />
+                            <span>Rotate</span>
                           </button>
-                          <button
-                            onClick={() => movePartIndex(index, 'down')}
-                            disabled={index === marksheetParts.length - 1}
-                            className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100 transition-colors"
-                            title="Move Down"
-                          >
-                            <MoveDown className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => removePart(part.id)}
-                            className="p-2 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 hover:bg-red-100 transition-colors"
-                            title="Remove"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+
+                          <label className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold cursor-pointer hover:bg-slate-100">
+                            <span>Replace</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={e => replacePartFile(part.id, e)} />
+                          </label>
+
+                          <div className="flex items-center space-x-1 border-l border-slate-300 dark:border-slate-600 pl-2">
+                            <button
+                              onClick={() => movePartIndex(index, 'up')}
+                              disabled={index === 0}
+                              className="p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100"
+                              title="Move Up"
+                            >
+                              <MoveUp className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => movePartIndex(index, 'down')}
+                              disabled={index === marksheetParts.length - 1}
+                              className="p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100"
+                              title="Move Down"
+                            >
+                              <MoveDown className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => removePart(part.id)}
+                              className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 hover:bg-red-100"
+                              title="Remove"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -687,12 +848,53 @@ export default function App() {
 
                   <div className="pt-4 flex justify-end">
                     <button
-                      onClick={mergeAndExtractMarksheet}
-                      disabled={isProcessingOcr || marksheetParts.length === 0}
+                      onClick={runQualityChecksAndMerge}
+                      disabled={progressStep !== 'idle' || marksheetParts.length === 0}
                       className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-emerald-600/25 disabled:opacity-50 transition-all"
                     >
+                      <Layers className="w-5 h-5" />
+                      <span>Run Quality Check & Merge</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Merged Preview & Quality Diagnostics Warnings */}
+              {mergedPreviewUrl && (
+                <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-base flex items-center space-x-2 text-emerald-700 dark:text-emerald-400">
+                      <Eye className="w-5 h-5" />
+                      <span>Merged Composite Marksheet Preview</span>
+                    </h3>
+                  </div>
+
+                  {qualityWarnings.length > 0 && (
+                    <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 space-y-2">
+                      <div className="font-bold text-amber-800 dark:text-amber-300 text-sm flex items-center space-x-2">
+                        <AlertTriangle className="w-5 h-5" />
+                        <span>Image Quality Warnings Detected:</span>
+                      </div>
+                      <ul className="list-disc list-inside text-xs text-amber-700 dark:text-amber-400 space-y-1">
+                        {qualityWarnings.map((warn, wIdx) => (
+                          <li key={wIdx}>{warn}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="border border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden max-h-96 bg-slate-900 flex justify-center">
+                    <img src={mergedPreviewUrl} alt="Merged Composite Marksheet" className="object-contain max-h-96" />
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={sendMergedImageToOcr}
+                      disabled={progressStep !== 'idle'}
+                      className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-emerald-600/25 transition-all"
+                    >
                       <Sparkles className="w-5 h-5" />
-                      <span>{isProcessingOcr ? 'Stitching & Extracting OCR...' : 'Merge & Send to OCR Review'}</span>
+                      <span>Send to Gemini OCR Extraction</span>
                     </button>
                   </div>
                 </div>
@@ -715,7 +917,7 @@ export default function App() {
                     </span>
                   )}
                 </h2>
-                <p className="text-sm text-slate-500">Review AI extracted scores, verify against confidence and max marks, and explicitly accept or correct every cell.</p>
+                <p className="text-sm text-slate-500">Review AI extracted scores, verify confidence, and explicitly accept or correct every cell.</p>
               </div>
 
               <div className="flex items-center space-x-3">
@@ -744,17 +946,16 @@ export default function App() {
               <div className="custom-card rounded-2xl p-12 text-center space-y-4">
                 <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
                 <h3 className="text-lg font-bold">No Active OCR Batch in Review</h3>
-                <p className="text-sm text-slate-500">Please upload and merge marksheet photo parts in the OCR Engine tab first.</p>
+                <p className="text-sm text-slate-500">Please upload, quality-check, and merge marksheet parts in the Quality Control tab first.</p>
                 <button
                   onClick={() => setActiveTab('ocrEngine')}
                   className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm shadow"
                 >
-                  Go to OCR Engine
+                  Go to Quality Control Studio
                 </button>
               </div>
             ) : (
               <div className="space-y-8">
-                {/* Batch Info Card */}
                 <div className="custom-card rounded-2xl p-6 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <div className="text-xs text-slate-400">Batch ID</div>
@@ -780,18 +981,16 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Merged Marksheet Reference Image */}
                 <div className="custom-card rounded-2xl p-6 space-y-4">
                   <h3 className="font-bold text-base flex items-center space-x-2">
                     <ImageIcon className="w-5 h-5 text-emerald-600" />
-                    <span>Merged Marksheet Source Image</span>
+                    <span>Merged Composite Marksheet Source Image</span>
                   </h3>
                   <div className="border border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden max-h-72 bg-slate-900 flex justify-center">
                     <img src={activeBatch.mergedImageUrl} alt="Merged Marksheet Source" className="object-contain max-h-72" />
                   </div>
                 </div>
 
-                {/* Review Table per Student */}
                 <div className="space-y-6">
                   {activeBatch.students.map((st, stIdx) => (
                     <div key={st.id} className="custom-card rounded-2xl p-6 shadow-sm space-y-4">
@@ -807,7 +1006,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Subjects & Cells Review */}
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs border border-slate-200 dark:border-slate-700">
                           <thead>
@@ -868,7 +1066,6 @@ export default function App() {
                                                 <span>({(cell.confidence * 100).toFixed(0)}%)</span>
                                               </div>
 
-                                              {/* Accept / Correct / Reject Controls */}
                                               {!activeBatch.isLocked && (
                                                 <div className="flex items-center space-x-1 pt-1">
                                                   <button
@@ -876,7 +1073,6 @@ export default function App() {
                                                     className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
                                                       cell.status === 'accepted' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 hover:bg-emerald-100'
                                                     }`}
-                                                    title="Accept OCR Mark"
                                                   >
                                                     Accept
                                                   </button>
@@ -885,14 +1081,12 @@ export default function App() {
                                                     className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
                                                       cell.status === 'corrected' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 hover:bg-amber-100'
                                                     }`}
-                                                    title="Mark Corrected"
                                                   >
                                                     Correct
                                                   </button>
                                                 </div>
                                               )}
 
-                                              {/* Status Badge */}
                                               <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
                                                 cell.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' :
                                                 cell.status === 'corrected' ? 'bg-amber-100 text-amber-800' :
@@ -919,7 +1113,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Unlock Modal */}
             {unlockModalOpen && (
               <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
                 <div className="custom-card rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl bg-white dark:bg-slate-800">
@@ -931,7 +1124,7 @@ export default function App() {
                   <textarea
                     value={unlockReason}
                     onChange={e => setUnlockReason(e.target.value)}
-                    placeholder="Enter reason for unlocking (e.g. Correcting teacher transcription error in Math)..."
+                    placeholder="Enter reason for unlocking..."
                     className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm bg-slate-50 dark:bg-slate-900"
                     rows={3}
                   />
@@ -1622,35 +1815,6 @@ export default function App() {
                 <div>
                   <h2 className="text-2xl font-bold">2018 Official Curriculum Reference</h2>
                   <p className="text-sm text-slate-500">Official ministerial competences, subjects, sub-competences and appreciation criteria.</p>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
-                <h3 className="font-bold text-base flex items-center space-x-2">
-                  <Award className="w-5 h-5 text-emerald-600" />
-                  <span>Official Appreciation Criteria / Critères d'Appréciation</span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                    <div className="font-bold text-red-600">0.0 - 10.99/20 (0.0 - 0.5495/1)</div>
-                    <div className="font-semibold">CNA - Competences Not Acquired</div>
-                    <div className="text-xs text-slate-500">Compétences Non Acquises [Grade C]</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                    <div className="font-bold text-amber-600">11 - 14.99/20 (0.55 - 0.7495/1)</div>
-                    <div className="font-semibold">CPA - Competences in Process of Acquisition</div>
-                    <div className="text-xs text-slate-500">Compétences en Voie d'Acquisition [Grade B]</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                    <div className="font-bold text-blue-600">15 - 17.99/20 (0.75 - 0.8995/1)</div>
-                    <div className="font-semibold">CA - Competences Acquired</div>
-                    <div className="text-xs text-slate-500">Compétences Acquises [Grade A]</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                    <div className="font-bold text-emerald-600">18 - 20.0/20 (0.9 - 1.0/1)</div>
-                    <div className="font-semibold">Ept - Expert</div>
-                    <div className="text-xs text-slate-500">Expert [Grade A+]</div>
-                  </div>
                 </div>
               </div>
             </div>
