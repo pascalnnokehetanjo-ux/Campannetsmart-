@@ -13,32 +13,31 @@ import {
   CheckCircle2, ArrowRight, Printer, Sparkles, AlertCircle, HelpCircle, ShieldCheck,
   MoveUp, MoveDown, Trash2, Layers, Image as ImageIcon, Check, X, Edit3, Lock, Unlock, History, AlertTriangle,
   RotateCw, RefreshCw, RefreshCcw, Eye, BarChart3, TrendingUp, Download, Filter, Target,
-  GraduationCap, MessageSquare, Send, CheckSquare
+  GraduationCap, MessageSquare, Send, CheckSquare, Info, RotateCcw
 } from 'lucide-react';
 
 const UI_TEXT = {
   en: {
-    appName: 'Campannetsmart',
+    appName: 'Campannetsmart (DEMO)',
     tagline: 'Official 2018 Curriculum Bilingual Marksheet OCR Calculation Engine & Report Card Generator',
-    heroHeading: 'Empowering Bilingual Teachers with Deterministic Marksheet Intelligence',
-    heroSub: 'Pilot School Readiness Hub: Onboarding wizard, teacher training guide, OCR accuracy metrics, feedback form, and admin dashboard.',
-    ctaUpload: 'Pilot Readiness Hub',
+    heroHeading: 'Campannetsmart Demo — Bilingual Marksheet Intelligence',
+    heroSub: 'Explore the interactive demo version. Upload mock marksheet parts, merge them, run OCR proposals, and generate bilingual report cards.',
+    ctaUpload: 'Start Demo Walkthrough',
     ctaExplore: 'Explore Report Generator',
+    demoBannerEn: 'DEMO VERSION — For testing and demonstration only. Do not enter real student data.',
+    demoBannerFr: 'VERSION DÉMO — Pour les tests et démonstrations uniquement. Ne saisissez pas de données réelles d’élèves.',
     tabs: {
-      dashboard: 'Overview & Demo',
-      pilotHub: 'Pilot Hub & Onboarding',
-      analytics: 'Analytics & Decisions',
-      ocrEngine: 'Quality Control & Merger',
-      ocrReview: 'OCR Review & Validation',
-      roster: 'Roster & Marks',
-      monthly: 'Monthly Reports',
-      termly: 'Termly Reports',
-      annual: 'Annual Reports',
-      curriculum: '2018 Curriculum'
+      dashboard: 'Demo Home',
+      notice: 'Demo Notice & Guide',
+      ocrEngine: '1. Upload & Merge',
+      ocrReview: '2. OCR Review',
+      roster: '3. Marks Manager',
+      monthly: '4. Monthly Reports',
+      termly: '5. Termly Reports',
+      annual: '6. Annual Reports',
+      curriculum: 'Curriculum 2018'
     },
-    featuresTitle: 'Why Teachers & Schools Choose Campannetsmart',
-    featuresSub: 'Engineered specifically for bilingual primary and secondary education systems adhering strictly to official ministerial evaluation standards.',
-    footerText: 'Campannetsmart Engine • Built strictly with deterministic mathematical formulas. AI never determines student marks.',
+    footerText: 'Campannetsmart Demo • Built strictly with deterministic mathematical formulas. AI never determines student marks.',
     printReport: 'Print Official Report Card',
     selectStudent: 'Select Student',
     selectTerm: 'Select Term',
@@ -46,27 +45,26 @@ const UI_TEXT = {
     reportLang: 'Report Language Version',
   },
   fr: {
-    appName: 'Campannetsmart',
+    appName: 'Campannetsmart (DÉMO)',
     tagline: 'Moteur de Calcul OCR de Notes Bilingue & Générateur de Bulletins (Programme Officiel 2018)',
-    heroHeading: 'Révolutionnez l\'Évaluation Scolaire Bilingue avec une Précision Mathématique',
-    heroSub: 'Hub de préparation au pilotage : Assistant d\'intégration, guide de formation, métriques OCR, formulaire de feedback et tableau de bord admin.',
-    ctaUpload: 'Hub Pilote & Intégration',
+    heroHeading: 'Démo Campannetsmart — Intelligence Bilingue des Notes',
+    heroSub: 'Explorez la version démo interactive. Téléchargez des parties fictives de notes, fusionnez-les et générez des bulletins bilingues.',
+    ctaUpload: 'Démarrer la Visite Guidée',
     ctaExplore: 'Explorer les Bulletins',
+    demoBannerEn: 'DEMO VERSION — For testing and demonstration only. Do not enter real student data.',
+    demoBannerFr: 'VERSION DÉMO — Pour les tests et démonstrations uniquement. Ne saisissez pas de données réelles d’élèves.',
     tabs: {
-      dashboard: 'Accueil & Démo',
-      pilotHub: 'Hub Pilote & Intégration',
-      analytics: 'Analyses & Décisions',
-      ocrEngine: 'Contrôle Qualité & Fusion',
-      ocrReview: 'Révision OCR & Validation',
-      roster: 'Élèves & Notes',
-      monthly: 'Bulletins Mensuels',
-      termly: 'Bulletins Trimestriels',
-      annual: 'Bulletins Annuels',
+      dashboard: 'Accueil Démo',
+      notice: 'Avis Démo & Guide',
+      ocrEngine: '1. Télécharger & Fusionner',
+      ocrReview: '2. Révision OCR',
+      roster: '3. Gestion des Notes',
+      monthly: '4. Bulletins Mensuels',
+      termly: '5. Bulletins Trimestriels',
+      annual: '6. Bulletins Annuels',
       curriculum: 'Curriculum 2018'
     },
-    featuresTitle: 'Pourquoi les Enseignants et Écoles Choisissent Campannetsmart',
-    featuresSub: 'Conçu spécifiquement pour l\'enseignement bilingue primaire et secondaire selon les normes ministérielles officielles 2018.',
-    footerText: 'Moteur Campannetsmart • Calculs mathématiques strictement déterministes. L\'IA ne détermine jamais les notes.',
+    footerText: 'Démo Campannetsmart • Calculs mathématiques strictement déterministes. L\'IA ne détermine jamais les notes.',
     printReport: 'Imprimer le Bulletin Officiel',
     selectStudent: 'Sélectionner l\'Élève',
     selectTerm: 'Sélectionner le Trimestre',
@@ -74,27 +72,26 @@ const UI_TEXT = {
     reportLang: 'Version Linguistique du Bulletin',
   },
   ha: {
-    appName: 'Campannetsmart',
+    appName: 'Campannetsmart (DEMO)',
     tagline: 'Injin Lissafin Takardun Sakamako da Kera Rahoton Dalibai ta Harsunan Biyu',
-    heroHeading: 'Karfin Koyo da Lissafi Na Musamman Ga Malamai da Makarantu',
-    heroSub: 'Shirye-shiryen makaranta don gwaji: jagorar koyarwa, kididdigar OCR, da fom din ra\'ayi.',
-    ctaUpload: 'Hub Din Gwaji',
+    heroHeading: 'Gwajin Campannetsmart — Kwarewar Lissafi da Harsunan Biyu',
+    heroSub: 'Gwada sigar gwaji ta musamman ba tare da ainihin bayanai ba.',
+    ctaUpload: 'Fara Gwaji',
     ctaExplore: 'Bincika Kera Rahoto',
+    demoBannerEn: 'DEMO VERSION — For testing and demonstration only. Do not enter real student data.',
+    demoBannerFr: 'VERSION DÉMO — Pour les tests et démonstrations uniquement. Ne saisissez pas de données réelles d’élèves.',
     tabs: {
-      dashboard: 'Bita & Gwaji',
-      pilotHub: 'Hub Din Gwaji',
-      analytics: 'Bincike & Shawarwari',
-      ocrEngine: 'Inganci & Haɗawa',
-      ocrReview: 'Bita da Tabbatarwa',
-      roster: 'Dalibai da Maki',
-      monthly: 'Rahoton Wata',
-      termly: 'Rahoton Zango',
-      annual: 'Rahoton Shekara',
+      dashboard: 'Gida',
+      notice: 'Sanarwa',
+      ocrEngine: '1. Sanya & Haɗa',
+      ocrReview: '2. Bita',
+      roster: '3. Maki',
+      monthly: '4. Wata',
+      termly: '5. Zango',
+      annual: '6. Shekara',
       curriculum: 'Tsarin 2018'
     },
-    featuresTitle: 'Me Yasa Malamai Ke Son Campannetsmart',
-    featuresSub: 'An tsara shi musamman don tsarin karatun bilingual da ke bin ka\'idojin gwamnati na hukuma.',
-    footerText: 'Campannetsmart Engine • Lissafi ne mai inganci ba tare da kuskure ba.',
+    footerText: 'Campannetsmart Demo • Lissafi ne mai inganci ba tare da kuskure ba.',
     printReport: 'Bugawa Rahoton Aji',
     selectStudent: 'Zabi Dalibi',
     selectTerm: 'Zabi Zango',
@@ -117,7 +114,11 @@ export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
-  const [classConfig, setClassConfig] = useState<ClassConfig>(DEFAULT_CLASS_CONFIG);
+  const [classConfig, setClassConfig] = useState<ClassConfig>({
+    ...DEFAULT_CLASS_CONFIG,
+    schoolNameEn: 'Demo School / École Démo',
+    schoolNameFr: 'École Démo / Demo School'
+  });
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
 
   const [selectedStudentId, setSelectedStudentId] = useState<string>(INITIAL_STUDENTS[0].id);
@@ -125,22 +126,6 @@ export default function App() {
   const [selectedMonth, setSelectedMonth] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].months[0]);
   const [reportLang, setReportLang] = useState<ReportLanguage>('en');
 
-  // Pilot Hub Sub-tabs
-  const [pilotSubTab, setPilotSubTab] = useState<'dashboard' | 'wizard' | 'training' | 'feedback'>('dashboard');
-
-  // Onboarding Wizard Form State
-  const [wizardSchoolName, setWizardSchoolName] = useState('École Bilingue Pilote Yaoundé');
-  const [wizardSubdivision, setWizardSubdivision] = useState('Mfoundi / Yaoundé 1');
-  const [wizardTeacherEmail, setWizardTeacherEmail] = useState('teacher.pilot@campannetsmart.cm');
-  const [wizardSaved, setWizardSaved] = useState(false);
-
-  // Pilot Feedback Form State
-  const [feedbackCategory, setFeedbackCategory] = useState('ocr_accuracy');
-  const [feedbackRating, setFeedbackRating] = useState('5');
-  const [feedbackComments, setFeedbackComments] = useState('');
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-
-  // Multi-part marksheet quality control state
   const [marksheetParts, setMarksheetParts] = useState<MarksheetPart[]>([]);
   const [progressStep, setProgressStep] = useState<ProgressStep>('idle');
   const [qualityWarnings, setQualityWarnings] = useState<string[]>([]);
@@ -148,10 +133,7 @@ export default function App() {
   const [ocrSuccessMsg, setOcrSuccessMsg] = useState<string | null>(null);
   const [mergedPreviewUrl, setMergedPreviewUrl] = useState<string | null>(null);
 
-  // Active OCR Review Batch State
   const [activeBatch, setActiveBatch] = useState<MarksheetBatch | null>(null);
-  const [unlockModalOpen, setUnlockModalOpen] = useState<boolean>(false);
-  const [unlockReason, setUnlockReason] = useState<string>('');
 
   const t = UI_TEXT[lang];
 
@@ -161,6 +143,17 @@ export default function App() {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+    }
+  };
+
+  const resetDemoData = () => {
+    if (window.confirm('Reset Demo Data? This will restore original sample roster and sample marks, and clear uploaded photos.')) {
+      setStudents(INITIAL_STUDENTS);
+      setMarksheetParts([]);
+      setMergedPreviewUrl(null);
+      setActiveBatch(null);
+      setOcrError(null);
+      setOcrSuccessMsg('Demo data successfully reset to initial sample state.');
     }
   };
 
@@ -208,28 +201,9 @@ export default function App() {
     setMergedPreviewUrl(null);
   };
 
-  const replacePartFile = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setMarksheetParts(prev => prev.map(p => {
-      if (p.id !== id) return p;
-      return { ...p, file, previewUrl: URL.createObjectURL(file), rotation: 0 };
-    }));
-    setMergedPreviewUrl(null);
-  };
-
-  const cancelAndReset = () => {
-    setMarksheetParts([]);
-    setMergedPreviewUrl(null);
-    setQualityWarnings([]);
-    setOcrError(null);
-    setOcrSuccessMsg(null);
-    setProgressStep('idle');
-  };
-
   const runQualityChecksAndMerge = async () => {
     if (marksheetParts.length === 0) {
-      setOcrError(lang === 'fr' ? 'Veuillez télécharger au moins une partie de note.' : 'Please upload at least one marksheet photo part.');
+      setOcrError('Please upload at least one marksheet photo part.');
       return;
     }
 
@@ -288,14 +262,8 @@ export default function App() {
       const mergedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
       setMergedPreviewUrl(mergedDataUrl);
 
-      const warnings: string[] = [];
-      if (maxWidth < 800 || totalHeight < 1000) {
-        warnings.push(lang === 'fr' ? 'Image de faible résolution. La précision OCR peut diminuer.' : 'Image resolution is low. OCR accuracy may reduce.');
-      }
-
-      setQualityWarnings(warnings);
       setProgressStep('idle');
-      setOcrSuccessMsg(lang === 'fr' ? 'Fusion réussie ! Veuillez vérifier l\'aperçu ci-dessous avant l\'OCR.' : 'Successfully merged parts! Please review preview below before OCR.');
+      setOcrSuccessMsg('Successfully merged demo parts! Ready for OCR extraction.');
     } catch (err: any) {
       setOcrError(err.message || 'Failed to merge marksheet photo parts');
       setProgressStep('idle');
@@ -323,7 +291,7 @@ export default function App() {
 
       if (data.success && data.data && data.data.students) {
         const batch: MarksheetBatch = {
-          batchId: data.data.batchId || `BATCH_${Date.now()}`,
+          batchId: data.data.batchId || `DEMO_BATCH_${Date.now()}`,
           timestamp: new Date().toLocaleString(),
           mergedImageUrl: mergedPreviewUrl,
           term: selectedTerm,
@@ -334,91 +302,26 @@ export default function App() {
             name: st.studentName,
             gender: 'M',
             dob: '01/01/2015',
-            confidence: st.confidence || 0.92,
+            confidence: st.confidence || 0.95,
             scores: st.scores
           }))
         };
 
         setActiveBatch(batch);
         setProgressStep('reviewing');
-        setOcrSuccessMsg(lang === 'fr' ? 'Extraction OCR réussie ! Redirection vers la révision.' : 'OCR extraction successful! Redirecting to review screen.');
+        setOcrSuccessMsg('OCR proposals extracted successfully! Redirecting to review.');
         setTimeout(() => setActiveTab('ocrReview'), 600);
       } else {
         throw new Error('Incomplete data returned from OCR engine.');
       }
     } catch (err: any) {
-      setOcrError(err.message || 'OCR recognition failed. Please check image quality and retry.');
+      setOcrError(err.message || 'OCR recognition failed. Please retry.');
       setProgressStep('idle');
     }
   };
 
-  const updateCellStatus = (studentId: string, subjectCode: string, evalType: 'oral' | 'written' | 'practical' | 'attitude', status: CellReviewStatus, newVal?: number) => {
-    if (!activeBatch || activeBatch.isLocked) return;
-
-    setActiveBatch(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        students: prev.students.map(st => {
-          if (st.id !== studentId) return st;
-          const cell = st.scores[subjectCode]?.[evalType];
-          if (!cell) return st;
-
-          const previousVal = cell.value;
-          const finalVal = newVal !== undefined ? newVal : cell.value;
-
-          const updatedCell = {
-            ...cell,
-            value: finalVal,
-            status,
-            previousValue: previousVal !== finalVal ? previousVal : cell.previousValue,
-            correctedBy: status === 'corrected' ? classConfig.teacherName : cell.correctedBy,
-            auditTrail: [
-              ...cell.auditTrail,
-              {
-                timestamp: new Date().toLocaleTimeString(),
-                action: status === 'accepted' ? 'accepted' : status === 'corrected' ? 'corrected' : 'rejected',
-                teacher: classConfig.teacherName,
-                details: `Mark set to ${finalVal}/${cell.max} (Status: ${status})${previousVal !== finalVal ? ` [Changed from ${previousVal}]` : ''}`
-              }
-            ]
-          };
-
-          return {
-            ...st,
-            scores: {
-              ...st.scores,
-              [subjectCode]: {
-                ...st.scores[subjectCode],
-                [evalType]: updatedCell
-              }
-            }
-          };
-        })
-      };
-    });
-  };
-
   const confirmAndTransferMarks = () => {
     if (!activeBatch) return;
-
-    let hasUnresolved = false;
-    activeBatch.students.forEach(st => {
-      Object.keys(st.scores).forEach(subCode => {
-        const subCells = st.scores[subCode];
-        (['oral', 'written', 'practical', 'attitude'] as const).forEach(et => {
-          const cell = subCells[et];
-          if (cell && (cell.status === 'pending' || cell.status === 'rejected')) {
-            hasUnresolved = true;
-          }
-        });
-      });
-    });
-
-    if (hasUnresolved) {
-      alert(lang === 'fr' ? 'Veuillez accepter ou corriger toutes les cellules avant de confirmer.' : 'Please accept or correct all extracted cells before confirming and transferring marks.');
-      return;
-    }
 
     setStudents(prev => prev.map(existingStudent => {
       const matchedExtracted = activeBatch.students.find(es => es.id === existingStudent.id);
@@ -431,10 +334,10 @@ export default function App() {
       Object.keys(matchedExtracted.scores).forEach(subCode => {
         const cells = matchedExtracted.scores[subCode];
         studentScores[activeBatch.term][activeBatch.month][subCode] = {
-          oral: cells.oral.status === 'accepted' || cells.oral.status === 'corrected' ? cells.oral.value : 0,
-          written: cells.written.status === 'accepted' || cells.written.status === 'corrected' ? cells.written.value : 0,
-          practical: cells.practical.status === 'accepted' || cells.practical.status === 'corrected' ? cells.practical.value : 0,
-          attitude: cells.attitude.status === 'accepted' || cells.attitude.status === 'corrected' ? cells.attitude.value : 0
+          oral: cells.oral.value,
+          written: cells.written.value,
+          practical: cells.practical.value,
+          attitude: cells.attitude.value
         };
       });
 
@@ -444,72 +347,42 @@ export default function App() {
       };
     }));
 
-    activeBatch.students.forEach(extSt => {
-      if (!students.some(s => s.id === extSt.id)) {
-        const newStudentScores: any = {
-          [activeBatch.term]: {
-            [activeBatch.month]: {}
-          }
-        };
-        Object.keys(extSt.scores).forEach(subCode => {
-          const cells = extSt.scores[subCode];
-          newStudentScores[activeBatch.term][activeBatch.month][subCode] = {
-            oral: cells.oral.value,
-            written: cells.written.value,
-            practical: cells.practical.value,
-            attitude: cells.attitude.value
-          };
-        });
-
-        setStudents(prev => [
-          ...prev,
-          {
-            id: extSt.id,
-            name: extSt.name,
-            gender: extSt.gender,
-            dob: extSt.dob,
-            scores: newStudentScores
-          }
-        ]);
-      }
-    });
-
     setActiveBatch(prev => prev ? { ...prev, isLocked: true, lockedAt: new Date().toLocaleString() } : null);
-    alert(lang === 'fr' ? 'Notes validées, verrouillées et transférées avec succès vers les bulletins officiels !' : 'Marks successfully validated, locked, and transferred to official monthly report cards with full audit trail preserved.');
+    alert('Demo marks successfully confirmed, locked, and transferred to monthly report cards!');
     setActiveTab('monthly');
-  };
-
-  const unlockBatchWithReason = () => {
-    if (!activeBatch || !unlockReason.trim()) {
-      alert(lang === 'fr' ? 'Veuillez fournir un motif de déverrouillage.' : 'Please provide a valid reason for unlocking this batch.');
-      return;
-    }
-    setActiveBatch(prev => prev ? {
-      ...prev,
-      isLocked: false,
-      unlockedBy: classConfig.teacherName,
-      unlockReason: unlockReason.trim()
-    } : null);
-    setUnlockReason('');
-    setUnlockModalOpen(false);
   };
 
   const currentStudent = students.find(s => s.id === selectedStudentId) || students[0];
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-950'}`}>
-      <header className="sticky top-0 z-50 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-xs no-print">
+      <div className="bg-amber-500 text-slate-950 px-4 py-2 text-center text-xs font-bold uppercase tracking-wider flex flex-col sm:flex-row justify-center items-center gap-2 no-print shadow-inner z-50">
+        <span className="bg-slate-950 text-amber-400 px-2 py-0.5 rounded text-[10px]">EN</span>
+        <span>{t.demoBannerEn}</span>
+        <span className="hidden sm:inline">|</span>
+        <span className="bg-slate-950 text-amber-400 px-2 py-0.5 rounded text-[10px]">FR</span>
+        <span>{t.demoBannerFr}</span>
+        <button
+          onClick={resetDemoData}
+          className="ml-4 px-3 py-1 bg-slate-950 text-amber-300 hover:bg-slate-900 rounded text-[11px] font-extrabold flex items-center space-x-1 transition-colors"
+        >
+          <RotateCcw className="w-3.5 h-3.5 mr-1" />
+          <span>Reset Demo Data</span>
+        </button>
+      </div>
+
+      <header className="sticky top-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-xs no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
-              C
+            <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+              D
             </div>
             <div>
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-600 to-amber-600 bg-clip-text text-transparent">
+              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-amber-600 to-emerald-600 bg-clip-text text-transparent">
                 {t.appName}
               </span>
-              <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-medium">
-                Pilot Readiness Hub
+              <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-medium">
+                Demo Sandbox Environment
               </span>
             </div>
           </div>
@@ -522,7 +395,7 @@ export default function App() {
                   key={l}
                   onClick={() => setLang(l)}
                   className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                    lang === l ? 'bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                    lang === l ? 'bg-white dark:bg-slate-600 text-amber-600 dark:text-amber-400 shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                   }`}
                 >
                   {l.toUpperCase()}
@@ -543,8 +416,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto space-x-1 py-2 border-t border-slate-100 dark:border-slate-700/50">
           {[
             { id: 'dashboard', label: t.tabs.dashboard, icon: BookOpen },
-            { id: 'pilotHub', label: t.tabs.pilotHub, icon: GraduationCap },
-            { id: 'analytics', label: t.tabs.analytics, icon: BarChart3 },
+            { id: 'notice', label: t.tabs.notice, icon: Info },
             { id: 'ocrEngine', label: t.tabs.ocrEngine, icon: Layers },
             { id: 'ocrReview', label: t.tabs.ocrReview, icon: CheckCircle2 },
             { id: 'roster', label: t.tabs.roster, icon: Users },
@@ -561,7 +433,7 @@ export default function App() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                   isActive 
-                    ? 'bg-emerald-600 text-white shadow-sm' 
+                    ? 'bg-amber-600 text-white shadow-sm' 
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
@@ -574,14 +446,13 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* TAB 1: DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div className="space-y-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
-                <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Real-School Pilot Readiness</span>
+                  <span>Demo Sandbox Version</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
                   {t.heroHeading}
@@ -591,44 +462,44 @@ export default function App() {
                 </p>
                 <div className="flex flex-wrap gap-4 pt-2">
                   <button
-                    onClick={() => setActiveTab('pilotHub')}
-                    className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5"
+                    onClick={() => setActiveTab('notice')}
+                    className="flex items-center space-x-2 bg-amber-600 hover:bg-amber-700 text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg shadow-amber-600/25 transition-all transform hover:-translate-y-0.5"
                   >
-                    <GraduationCap className="w-5 h-5" />
+                    <Info className="w-5 h-5" />
                     <span>{t.ctaUpload}</span>
                     <ArrowRight className="w-4 h-4 ml-1" />
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('ocrEngine')}
+                    className="flex items-center space-x-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white px-6 py-3.5 rounded-xl font-semibold shadow-md transition-all"
+                  >
+                    <Layers className="w-5 h-5 text-amber-400" />
+                    <span>Start Demo Workflow</span>
                   </button>
                 </div>
               </div>
 
               <div className="custom-card rounded-2xl p-6 shadow-xl relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-                <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-48 h-48 bg-emerald-500/15 rounded-full blur-2xl"></div>
+                <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-48 h-48 bg-amber-500/15 rounded-full blur-2xl"></div>
                 <div className="relative z-10 space-y-6">
                   <div className="flex items-center justify-between border-b border-slate-700 pb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-950">
-                        PR
+                      <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center font-bold text-slate-950">
+                        SB
                       </div>
-                      <span className="font-bold text-sm">Pilot Readiness Active</span>
+                      <span className="font-bold text-sm">Demo Sandbox Active</span>
                     </div>
-                    <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-mono">
-                      v2.9 Ready
+                    <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 font-mono">
+                      Mock Data Only
                     </span>
                   </div>
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">Onboarding & Training Guide</div>
-                        <div className="text-lg font-bold text-emerald-400">Bilingual English & French</div>
+                        <div className="text-xs text-slate-400">Sample School</div>
+                        <div className="text-lg font-bold text-amber-400">Demo School / École Démo</div>
                       </div>
-                      <GraduationCap className="w-8 h-8 text-emerald-400" />
-                    </div>
-                    <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
-                      <div>
-                        <div className="text-xs text-slate-400">OCR Accuracy Tracking</div>
-                        <div className="text-lg font-bold text-amber-400">Correction & Acceptance Metrics</div>
-                      </div>
-                      <BarChart3 className="w-8 h-8 text-amber-400" />
+                      <ShieldCheck className="w-8 h-8 text-amber-400" />
                     </div>
                   </div>
                 </div>
@@ -637,333 +508,206 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: PILOT HUB & ONBOARDING */}
-        {activeTab === 'pilotHub' && (
-          <div className="space-y-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-bold flex items-center space-x-2">
-                  <GraduationCap className="w-6 h-6 text-emerald-600" />
-                  <span>{lang === 'fr' ? 'Hub Pilote & Intégration' : 'Pilot School Hub & Onboarding'}</span>
-                </h2>
-                <p className="text-sm text-slate-500">
-                  {lang === 'fr' 
-                    ? 'Tableau de bord administrateur, assistant d\'intégration, guide de formation et formulaire de feedback.' 
-                    : 'Administrator dashboard, onboarding wizard, teacher training guide, and pilot feedback form.'}
-                </p>
+        {activeTab === 'notice' && (
+          <div className="space-y-8 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 shadow-sm space-y-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
+                  <Info className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Demo Notice & Walkthrough Guide</h2>
+                  <p className="text-sm text-slate-500">Important information regarding demo capabilities, OCR proposals, and the live production version.</p>
+                </div>
               </div>
 
-              {/* Sub-tabs */}
-              <div className="flex space-x-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                {[
-                  { id: 'dashboard', label: lang === 'fr' ? 'Tableau de Bord' : 'Admin Dashboard' },
-                  { id: 'wizard', label: lang === 'fr' ? 'Assistant d\'Intégration' : 'Onboarding Wizard' },
-                  { id: 'training', label: lang === 'fr' ? 'Guide de Formation' : 'Teacher Guide' },
-                  { id: 'feedback', label: lang === 'fr' ? 'Feedback Pilote' : 'Feedback Form' }
-                ].map(st => (
-                  <button
-                    key={st.id}
-                    onClick={() => setPilotSubTab(st.id as any)}
-                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                      pilotSubTab === st.id ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    {st.label}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border space-y-2">
+                  <div className="font-bold text-amber-600">What this Demo Can Do</div>
+                  <ul className="list-disc list-inside text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                    <li>Upload multiple marksheet photo parts.</li>
+                    <li>Merge and reorder parts vertically.</li>
+                    <li>Extract mock OCR proposals via Gemini.</li>
+                    <li>Run 100% deterministic math calculations.</li>
+                    <li>Generate separate English and French report cards.</li>
+                  </ul>
+                </div>
+
+                <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border space-y-2">
+                  <div className="font-bold text-emerald-600">Live Production Version</div>
+                  <ul className="list-disc list-inside text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                    <li>Secure multi-school database accounts (Supabase).</li>
+                    <li>Strict Row Level Security (RLS) tenant isolation.</li>
+                    <li>Official teacher verification workflows and audit trails.</li>
+                    <li>Permanent cloud storage for official school marksheets.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="font-bold text-base">Demo Walkthrough Steps:</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border"><strong>Step 1:</strong> Upload marksheet parts in tab 1.</div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border"><strong>Step 2:</strong> Reorder and merge parts.</div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border"><strong>Step 3:</strong> Run OCR extraction proposals.</div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border"><strong>Step 4:</strong> Review extracted marks in tab 2.</div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border"><strong>Step 5:</strong> View Monthly Report Card in tab 4.</div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-800 border"><strong>Step 6:</strong> Switch between English and French versions.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'ocrEngine' && (
+          <div className="space-y-8 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">1. Upload & Merge Marksheet Parts (Demo)</h2>
+              <p className="text-sm text-slate-500">Upload multiple photos of the demo marksheet, reorder them, and merge them into a composite image.</p>
+
+              {ocrError && <div className="p-4 rounded bg-red-50 text-red-700 text-sm">{ocrError}</div>}
+              {ocrSuccessMsg && <div className="p-4 rounded bg-emerald-50 text-emerald-700 text-sm">{ocrSuccessMsg}</div>}
+
+              <div className="border-2 border-dashed rounded-2xl p-8 text-center space-y-4">
+                <Upload className="w-8 h-8 text-amber-600 mx-auto" />
+                <label className="inline-block cursor-pointer bg-amber-600 text-white px-6 py-3 rounded-xl font-semibold text-sm">
+                  <span>Select Demo Photo Parts</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddMarksheetParts} />
+                </label>
+              </div>
+
+              {marksheetParts.length > 0 && (
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="font-bold text-base">Uploaded Parts ({marksheetParts.length})</h3>
+                  <div className="space-y-3">
+                    {marksheetParts.map((part, index) => (
+                      <div key={part.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border">
+                        <div className="flex items-center space-x-4">
+                          <span className="w-6 h-6 rounded-full bg-amber-600 text-white text-xs font-bold flex items-center justify-center">{index + 1}</span>
+                          <img src={part.previewUrl} alt="Part" className="w-14 h-14 object-cover rounded-lg" style={{ transform: `rotate(${part.rotation}deg)` }} />
+                          <span className="text-sm font-semibold">{part.file.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button onClick={() => rotatePart(part.id)} className="p-2 rounded bg-white dark:bg-slate-700 text-xs font-semibold flex items-center"><RotateCw className="w-3.5 h-3.5 mr-1" /> Rotate</button>
+                          <button onClick={() => setMarksheetParts(prev => prev.filter(p => p.id !== part.id))} className="p-2 rounded bg-red-50 text-red-600"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={runQualityChecksAndMerge} className="w-full py-3 bg-amber-600 text-white font-bold rounded-xl">Merge Demo Parts</button>
+                </div>
+              )}
+
+              {mergedPreviewUrl && (
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="font-bold text-base text-amber-600">Merged Composite Preview Ready</h3>
+                  <div className="max-h-64 overflow-hidden rounded-xl border bg-slate-900 flex justify-center">
+                    <img src={mergedPreviewUrl} alt="Merged" className="max-h-64 object-contain" />
+                  </div>
+                  <button onClick={sendMergedImageToOcr} className="w-full py-3 bg-amber-600 text-white font-bold rounded-xl">Send to OCR Proposal Engine</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'ocrReview' && (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">2. OCR Proposals & Verification (Demo)</h2>
+              {!activeBatch ? (
+                <div className="text-center py-12 text-slate-500">No active demo OCR batch. Please upload and merge parts in Tab 1 first.</div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                    <span>Demo Batch ID: <strong>{activeBatch.batchId}</strong></span>
+                    <button onClick={confirmAndTransferMarks} className="px-6 py-2.5 bg-amber-600 text-white font-bold rounded-xl shadow">Confirm Demo Marks</button>
+                  </div>
+                  <div className="space-y-4">
+                    {activeBatch.students.map(st => (
+                      <div key={st.id} className="p-4 rounded-xl border bg-white dark:bg-slate-800 space-y-2">
+                        <div className="font-bold text-base">{st.name} ({st.id}) — Confidence: {(st.confidence * 100).toFixed(0)}%</div>
+                        <div className="text-xs text-slate-500">Extracted scores ready for confirmation.</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'roster' && (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">3. Demo Student Roster & Marks Manager</h2>
+              <div className="flex space-x-2">
+                {students.map(st => (
+                  <button key={st.id} onClick={() => setSelectedStudentId(st.id)} className={`px-4 py-2 rounded-xl text-sm font-semibold ${selectedStudentId === st.id ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                    {st.name}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Sub-tab 1: Admin Dashboard */}
-            {pilotSubTab === 'dashboard' && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
-                    <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Enseignants Intégrés' : 'Teachers Onboarded'}</div>
-                    <div className="text-3xl font-extrabold text-emerald-600">4 / 5</div>
-                    <div className="text-xs text-slate-500">Active pilot faculty</div>
-                  </div>
-                  <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
-                    <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Élèves Inscrits' : 'Students Added'}</div>
-                    <div className="text-3xl font-extrabold text-blue-600">{students.length}</div>
-                    <div className="text-xs text-slate-500">Primary 5 Bilingual</div>
-                  </div>
-                  <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
-                    <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Notes Vérifiées' : 'Marks Verified'}</div>
-                    <div className="text-3xl font-extrabold text-amber-600">100%</div>
-                    <div className="text-xs text-slate-500">Locked & transferred</div>
-                  </div>
-                  <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
-                    <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Taux de Correction OCR' : 'OCR Correction Rate'}</div>
-                    <div className="text-3xl font-extrabold text-indigo-600">4.2%</div>
-                    <div className="text-xs text-slate-500">High extraction accuracy</div>
-                  </div>
-                </div>
-
-                <div className="custom-card rounded-2xl p-6 shadow-sm space-y-4">
-                  <h3 className="text-lg font-bold flex items-center space-x-2">
-                    <BarChart3 className="w-5 h-5 text-emerald-600" />
-                    <span>{lang === 'fr' ? 'Métriques de Précision OCR' : 'OCR Accuracy Tracking Metrics'}</span>
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border space-y-1">
-                      <div className="text-slate-500 text-xs">{lang === 'fr' ? 'Photos Traitées' : 'Photos Processed'}</div>
-                      <div className="text-2xl font-bold">12 Batches</div>
-                    </div>
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border space-y-1">
-                      <div className="text-slate-500 text-xs">{lang === 'fr' ? 'Cellules Reconnues' : 'Cells Recognized'}</div>
-                      <div className="text-2xl font-bold">1,440 Cells</div>
-                    </div>
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border space-y-1">
-                      <div className="text-slate-500 text-xs">{lang === 'fr' ? 'Erreurs OCR Fréquentes' : 'Most Common OCR Errors'}</div>
-                      <div className="text-sm font-semibold text-amber-600">Handwritten digit '7' vs '1'</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Sub-tab 2: Onboarding Wizard */}
-            {pilotSubTab === 'wizard' && (
-              <div className="custom-card rounded-2xl p-8 max-w-3xl mx-auto space-y-6">
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold">{lang === 'fr' ? 'Assistant d\'Intégration de l\'École Pilote' : 'Pilot School Onboarding Wizard'}</h3>
-                  <p className="text-xs text-slate-500">
-                    {lang === 'fr' 
-                      ? 'Configurez votre profil d\'école, classes, années académiques et invitez des enseignants en quelques minutes.' 
-                      : 'Configure your school profile, classes, academic years, and invite teachers in minutes.'}
-                  </p>
-                </div>
-
-                {wizardSaved && (
-                  <div className="p-4 rounded-xl bg-emerald-50 text-emerald-700 font-semibold text-sm flex items-center space-x-2">
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span>{lang === 'fr' ? 'École configurée et enregistrée avec succès !' : 'School successfully configured and saved!'}</span>
-                  </div>
-                )}
-
-                <div className="space-y-4 text-sm">
-                  <div className="space-y-1">
-                    <label className="font-semibold">{lang === 'fr' ? 'Nom de l\'École' : 'School Name'}</label>
-                    <input 
-                      type="text" 
-                      value={wizardSchoolName} 
-                      onChange={e => setWizardSchoolName(e.target.value)}
-                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900" 
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-semibold">{lang === 'fr' ? 'Subdivision / Ville' : 'Subdivision / City'}</label>
-                    <input 
-                      type="text" 
-                      value={wizardSubdivision} 
-                      onChange={e => setWizardSubdivision(e.target.value)}
-                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900" 
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-semibold">{lang === 'fr' ? 'Email de l\'Enseignant / Inviter' : 'Teacher Email Invitation'}</label>
-                    <input 
-                      type="email" 
-                      value={wizardTeacherEmail} 
-                      onChange={e => setWizardTeacherEmail(e.target.value)}
-                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900" 
-                    />
-                  </div>
-
-                  <div className="pt-4 flex justify-end">
-                    <button
-                      onClick={() => setWizardSaved(true)}
-                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow"
-                    >
-                      {lang === 'fr' ? 'Enregistrer et Lancer le Pilote' : 'Save & Launch Pilot Setup'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Sub-tab 3: Teacher Training Guide */}
-            {pilotSubTab === 'training' && (
-              <div className="custom-card rounded-2xl p-8 max-w-4xl mx-auto space-y-8">
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold">{lang === 'fr' ? 'Guide de Formation des Enseignants' : 'Teacher Training & User Guide'}</h3>
-                  <p className="text-xs text-slate-500">
-                    {lang === 'fr' 
-                      ? 'Instructions pas à pas pour photographier les notes, fusionner, réviser et générer les bulletins.' 
-                      : 'Step-by-step instructions for photographing marksheets, merging, reviewing OCR, and generating report cards.'}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                  {[
-                    { title: '1. Photographing Marksheets', desc: 'Ensure good lighting and capture clear vertical photos of marksheet sections.' },
-                    { title: '2. Uploading Multiple Parts', desc: 'Upload top and bottom parts of the same marksheet into the Quality Control studio.' },
-                    { title: '3. Reordering & Merging', desc: 'Use Up/Down arrows to order parts and click Run Quality Check & Merge.' },
-                    { title: '4. Reviewing OCR Proposals', desc: 'Inspect AI confidence scores and raw OCR values in the OCR Review screen.' },
-                    { title: '5. Correcting Marks', desc: 'Explicitly accept or correct every cell before transferring marks.' },
-                    { title: '6. Report Card Generation', desc: 'Instantaneous bilingual generation of monthly, termly, and annual report cards.' }
-                  ].map((guide, gIdx) => (
-                    <div key={gIdx} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border space-y-1">
-                      <div className="font-bold text-emerald-700 dark:text-emerald-300">{guide.title}</div>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">{guide.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Sub-tab 4: Pilot Feedback Form */}
-            {pilotSubTab === 'feedback' && (
-              <div className="custom-card rounded-2xl p-8 max-w-3xl mx-auto space-y-6">
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold">{lang === 'fr' ? 'Formulaire de Feedback Pilote' : 'Pilot Feedback Form'}</h3>
-                  <p className="text-xs text-slate-500">
-                    {lang === 'fr' 
-                      ? 'Aidez-nous à améliorer la précision et l\'expérience utilisateur pendant le pilote.' 
-                      : 'Help us improve extraction accuracy and user experience during the school pilot.'}
-                  </p>
-                </div>
-
-                {feedbackSubmitted && (
-                  <div className="p-4 rounded-xl bg-emerald-50 text-emerald-700 font-semibold text-sm flex items-center space-x-2">
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span>{lang === 'fr' ? 'Feedback soumis avec succès. Merci !' : 'Feedback submitted successfully. Thank you!'}</span>
-                  </div>
-                )}
-
-                <div className="space-y-4 text-sm">
-                  <div className="space-y-1">
-                    <label className="font-semibold">{lang === 'fr' ? 'Catégorie de Feedback' : 'Feedback Category'}</label>
-                    <select
-                      value={feedbackCategory}
-                      onChange={e => setFeedbackCategory(e.target.value)}
-                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900"
-                    >
-                      <option value="ocr_accuracy">OCR Accuracy</option>
-                      <option value="photo_quality">Photo Quality Issues</option>
-                      <option value="missing_marks">Missing Marks</option>
-                      <option value="student_matching">Student Matching</option>
-                      <option value="report_readability">Report-Card Readability</option>
-                      <option value="connectivity">Internet Connectivity</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-semibold">{lang === 'fr' ? 'Évaluation Globale' : 'Overall Satisfaction Rating (1-5)'}</label>
-                    <select
-                      value={feedbackRating}
-                      onChange={e => setFeedbackRating(e.target.value)}
-                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900"
-                    >
-                      <option value="5">5 - Excellent</option>
-                      <option value="4">4 - Very Good</option>
-                      <option value="3">3 - Satisfactory</option>
-                      <option value="2">2 - Needs Improvement</option>
-                      <option value="1">1 - Poor</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-semibold">{lang === 'fr' ? 'Commentaires & Observations' : 'Comments & Observations'}</label>
-                    <textarea
-                      value={feedbackComments}
-                      onChange={e => setFeedbackComments(e.target.value)}
-                      placeholder="Share your experience with marksheet stitching or OCR recognition..."
-                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900"
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="pt-4 flex justify-end">
-                    <button
-                      onClick={() => setFeedbackSubmitted(true)}
-                      className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow"
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>{lang === 'fr' ? 'Soumettre le Feedback' : 'Submit Pilot Feedback'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
-        {/* TAB 3: ANALYTICS */}
-        {activeTab === 'analytics' && (
-          <div className="space-y-8">
-            <h2 className="text-2xl font-bold">Analytics & Actionable Decisions</h2>
-          </div>
-        )}
-
-        {/* TAB 4: OCR QUALITY CONTROL & MERGER */}
-        {activeTab === 'ocrEngine' && (
-          <div className="space-y-8 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-bold">Quality Control & Marksheet Merger</h2>
-              <input type="file" accept="image/*" multiple onChange={handleAddMarksheetParts} />
-              {marksheetParts.length > 0 && (
-                <button onClick={runQualityChecksAndMerge} className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl">Merge & Check Quality</button>
-              )}
-              {mergedPreviewUrl && (
-                <button onClick={sendMergedImageToOcr} className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl">Send to OCR</button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 5: OCR REVIEW */}
-        {activeTab === 'ocrReview' && (
-          <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-bold">OCR Review & Validation</h2>
-              {!activeBatch ? <p>No active batch.</p> : <button onClick={confirmAndTransferMarks} className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl">Confirm & Transfer</button>}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 6: ROSTER */}
-        {activeTab === 'roster' && (
-          <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-bold">Student Roster</h2>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 7: MONTHLY REPORT CARDS */}
         {activeTab === 'monthly' && (
           <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
-              <h2 className="text-xl font-bold">Monthly Report Card</h2>
+            <div className="flex justify-between items-center no-print">
+              <h2 className="text-xl font-bold">4. Monthly Report Card (Demo)</h2>
+              <button onClick={() => window.print()} className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold flex items-center"><Printer className="w-4 h-4 mr-1" /> Print Report</button>
+            </div>
+            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border-2 border-amber-300">
+              <div className="text-center border-b-2 pb-4">
+                <div className="text-xs font-bold text-amber-600 uppercase">DEMO SCHOOL / ÉCOLE DÉMO</div>
+                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
+                <div className="text-lg font-bold uppercase pt-2">Monthly Evaluation Report Card</div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl">
+                <div><strong>Student Name:</strong> {currentStudent.name}</div>
+                <div><strong>Monthly Average:</strong> {calculateMonthlyAverage(currentStudent.scores[selectedTerm]?.[selectedMonth] || {})}/20</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* TAB 8: TERMLY REPORT CARDS */}
         {activeTab === 'termly' && (
           <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
-              <h2 className="text-xl font-bold">Termly Report Card</h2>
+            <div className="flex justify-between items-center no-print">
+              <h2 className="text-xl font-bold">5. Termly Report Card (Demo)</h2>
+              <button onClick={() => window.print()} className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold flex items-center"><Printer className="w-4 h-4 mr-1" /> Print Report</button>
+            </div>
+            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border-2 border-amber-300">
+              <div className="text-center border-b-2 pb-4">
+                <div className="text-xs font-bold text-amber-600 uppercase">DEMO SCHOOL / ÉCOLE DÉMO</div>
+                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
+                <div className="text-lg font-bold uppercase pt-2">Official Termly Report Card</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* TAB 9: ANNUAL REPORT CARDS */}
         {activeTab === 'annual' && (
           <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
-              <h2 className="text-xl font-bold">Annual Report Card</h2>
+            <div className="flex justify-between items-center no-print">
+              <h2 className="text-xl font-bold">6. Annual Report Card (Demo)</h2>
+              <button onClick={() => window.print()} className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold flex items-center"><Printer className="w-4 h-4 mr-1" /> Print Report</button>
+            </div>
+            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border-2 border-amber-300">
+              <div className="text-center border-b-2 pb-4">
+                <div className="text-xs font-bold text-amber-600 uppercase">DEMO SCHOOL / ÉCOLE DÉMO</div>
+                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
+                <div className="text-lg font-bold uppercase pt-2">Official Annual Report Card</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* TAB 10: CURRICULUM */}
         {activeTab === 'curriculum' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-bold">2018 Curriculum</h2>
+              <h2 className="text-2xl font-bold">2018 Official Curriculum Reference</h2>
             </div>
           </div>
         )}
@@ -972,7 +716,7 @@ export default function App() {
       <footer className="mt-20 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/50 py-8 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-2">
           <p>{t.footerText}</p>
-          <p>© 2026 Campannetsmart Engine • Official Bilingual Primary & Secondary Evaluation System.</p>
+          <p>© 2026 Campannetsmart Demo • For Testing and Demonstration Only.</p>
         </div>
       </footer>
     </div>
