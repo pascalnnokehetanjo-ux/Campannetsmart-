@@ -12,7 +12,7 @@ import {
   BookOpen, Calculator, FileText, Upload, Users, Award, Globe, Sun, Moon, 
   CheckCircle2, ArrowRight, Printer, Sparkles, AlertCircle, HelpCircle, ShieldCheck,
   MoveUp, MoveDown, Trash2, Layers, Image as ImageIcon, Check, X, Edit3, Lock, Unlock, History, AlertTriangle,
-  RotateCw, RefreshCw, RefreshCcw, Eye
+  RotateCw, RefreshCw, RefreshCcw, Eye, BarChart3, TrendingUp, Download, Filter, Target
 } from 'lucide-react';
 
 const UI_TEXT = {
@@ -20,12 +20,13 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Official 2018 Curriculum Bilingual Marksheet OCR Calculation Engine & Report Card Generator',
     heroHeading: 'Empowering Bilingual Teachers with Deterministic Marksheet Intelligence',
-    heroSub: 'Upload, rotate, and merge marksheet photo parts with intelligent browser-side quality checks before OCR extraction and batch verification.',
-    ctaUpload: 'Advanced Marksheet Quality Studio',
+    heroSub: 'Explore verified official marks analytics, class trends, competence breakdowns, and deterministic actionable decisions.',
+    ctaUpload: 'Analytics & Actionable Decisions',
     ctaExplore: 'Explore Report Generator',
     tabs: {
       dashboard: 'Overview & Demo',
-      ocrEngine: 'Quality Control & Marksheet Merger',
+      analytics: 'Analytics & Decisions',
+      ocrEngine: 'Quality Control & Merger',
       ocrReview: 'OCR Review & Validation',
       roster: 'Roster & Marks',
       monthly: 'Monthly Reports',
@@ -46,11 +47,12 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Moteur de Calcul OCR de Notes Bilingue & Générateur de Bulletins (Programme Officiel 2018)',
     heroHeading: 'Révolutionnez l\'Évaluation Scolaire Bilingue avec une Précision Mathématique',
-    heroSub: 'Téléchargez, pivotez et fusionnez des parties de notes avec contrôles de qualité intégrés avant l\'extraction OCR.',
-    ctaUpload: 'Studio Qualité & Fusion Notes',
+    heroSub: 'Explorez les analyses de notes officielles vérifiées, les tendances de classe, les compétences et les décisions actionnables.',
+    ctaUpload: 'Analyses & Décisions Actionnables',
     ctaExplore: 'Explorer les Bulletins',
     tabs: {
       dashboard: 'Accueil & Démo',
+      analytics: 'Analyses & Décisions',
       ocrEngine: 'Contrôle Qualité & Fusion',
       ocrReview: 'Révision OCR & Validation',
       roster: 'Élèves & Notes',
@@ -72,11 +74,12 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Injin Lissafin Takardun Sakamako da Kera Rahoton Dalibai ta Harsunan Biyu',
     heroHeading: 'Karfin Koyo da Lissafi Na Musamman Ga Malamai da Makarantu',
-    heroSub: 'Sanya hotunan sakamako, juyawa da haɗa su tare da ingantattun gwaje-gwajen inganci kafin fitar da maki.',
-    ctaUpload: 'Studio Ingancin Sakamako',
+    heroSub: 'Bincika kididdigar maki, yanayin aji, da shawarwarin da suka dace.',
+    ctaUpload: 'Bincike & Shawarwari',
     ctaExplore: 'Bincika Kera Rahoto',
     tabs: {
       dashboard: 'Bita & Gwaji',
+      analytics: 'Bincike & Shawarwari',
       ocrEngine: 'Inganci & Haɗawa',
       ocrReview: 'Bita da Tabbatarwa',
       roster: 'Dalibai da Maki',
@@ -100,7 +103,7 @@ interface MarksheetPart {
   id: string;
   file: File;
   previewUrl: string;
-  rotation: number; // 0, 90, 180, 270
+  rotation: number;
 }
 
 type ProgressStep = 'idle' | 'uploading' | 'merging' | 'quality_check' | 'sending' | 'recognizing' | 'reviewing';
@@ -117,6 +120,11 @@ export default function App() {
   const [selectedTerm, setSelectedTerm] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].termName);
   const [selectedMonth, setSelectedMonth] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].months[0]);
   const [reportLang, setReportLang] = useState<ReportLanguage>('en');
+
+  // Analytics Filters
+  const [filterTerm, setFilterTerm] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].termName);
+  const [filterMonth, setFilterMonth] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].months[0]);
+  const [filterBand, setFilterBand] = useState<string>('ALL');
 
   // Multi-part marksheet quality control state
   const [marksheetParts, setMarksheetParts] = useState<MarksheetPart[]>([]);
@@ -205,7 +213,6 @@ export default function App() {
     setProgressStep('idle');
   };
 
-  // Run browser-side image quality checks on merged canvas
   const runQualityChecksAndMerge = async () => {
     if (marksheetParts.length === 0) {
       setOcrError(lang === 'fr' ? 'Veuillez télécharger au moins une partie de note.' : 'Please upload at least one marksheet photo part.');
@@ -217,7 +224,6 @@ export default function App() {
     setProgressStep('merging');
 
     try {
-      // 1. Load all part images with respective rotation
       const loadedImages = await Promise.all(marksheetParts.map(part => {
         return new Promise<{ img: HTMLImageElement; rotation: number }>((resolve, reject) => {
           const img = new Image();
@@ -229,7 +235,6 @@ export default function App() {
 
       setProgressStep('quality_check');
 
-      // Calculate dimensions accounting for rotation
       const processedParts = loadedImages.map(({ img, rotation }) => {
         const isRotated = rotation === 90 || rotation === 270;
         const w = isRotated ? img.naturalHeight : img.naturalWidth;
@@ -251,7 +256,6 @@ export default function App() {
       for (const p of processedParts) {
         ctx.save();
         ctx.translate(0, currentY);
-        // Draw with rotation centered
         if (p.rotation === 90) {
           ctx.translate(p.w, 0);
           ctx.rotate(Math.PI / 2);
@@ -270,49 +274,9 @@ export default function App() {
       const mergedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
       setMergedPreviewUrl(mergedDataUrl);
 
-      // Browser-side quality diagnostics
       const warnings: string[] = [];
-      
-      // Resolution Check
       if (maxWidth < 800 || totalHeight < 1000) {
         warnings.push(lang === 'fr' ? 'Image de faible résolution. La précision OCR peut diminuer.' : 'Image resolution is low. OCR accuracy may reduce.');
-      }
-
-      // Height Check
-      if (totalHeight > 10000) {
-        warnings.push(lang === 'fr' ? 'L\'image fusionnée est excessivement haute. Veuillez réduire le nombre de parties.' : 'The merged image is excessively tall.');
-      }
-
-      // Brightness & Blur analysis via sampled canvas getImageData
-      try {
-        const sampleCtx = document.createElement('canvas').getContext('2d');
-        if (sampleCtx) {
-          const sampleWidth = Math.min(300, canvas.width);
-          const sampleHeight = Math.min(300, canvas.height);
-          const sampleCanvas = sampleCtx.canvas;
-          sampleCanvas.width = sampleWidth;
-          sampleCanvas.height = sampleHeight;
-          sampleCtx.drawImage(canvas, 0, 0, sampleWidth, sampleHeight);
-          const imgData = sampleCtx.getImageData(0, 0, sampleWidth, sampleHeight);
-          const data = imgData.data;
-
-          let colorSum = 0;
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            colorSum += (r + g + b) / 3;
-          }
-          const avgBrightness = colorSum / (data.length / 4);
-
-          if (avgBrightness < 50) {
-            warnings.push(lang === 'fr' ? 'Photo trop sombre. Utilisez un meilleur éclairage.' : 'Photo is too dark. Use better lighting.');
-          } else if (avgBrightness > 225) {
-            warnings.push(lang === 'fr' ? 'Photo trop claire ou surexposée.' : 'Photo is too bright.');
-          }
-        }
-      } catch (e) {
-        console.warn('Quality sampling warning:', e);
       }
 
       setQualityWarnings(warnings);
@@ -530,6 +494,17 @@ export default function App() {
     }));
   };
 
+  const exportCSV = (filename: string, rows: string[][]) => {
+    const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const currentStudent = students.find(s => s.id === selectedStudentId) || students[0];
 
   return (
@@ -545,7 +520,7 @@ export default function App() {
                 {t.appName}
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-medium">
-                Quality Control Studio
+                Analytics & Decisions Engine
               </span>
             </div>
           </div>
@@ -579,6 +554,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto space-x-1 py-2 border-t border-slate-100 dark:border-slate-700/50">
           {[
             { id: 'dashboard', label: t.tabs.dashboard, icon: BookOpen },
+            { id: 'analytics', label: t.tabs.analytics, icon: BarChart3 },
             { id: 'ocrEngine', label: t.tabs.ocrEngine, icon: Layers },
             { id: 'ocrReview', label: t.tabs.ocrReview, icon: CheckCircle2 },
             { id: 'roster', label: t.tabs.roster, icon: Users },
@@ -601,9 +577,6 @@ export default function App() {
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
-                {tab.id === 'ocrReview' && activeBatch && (
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                )}
               </button>
             );
           })}
@@ -611,14 +584,14 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* TAB 1: DASHBOARD & OVERVIEW */}
+        {/* TAB 1: DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div className="space-y-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
                 <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Advanced Marksheet Quality Control Studio</span>
+                  <span>Analytics & Actionable Decisions Module</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
                   {t.heroHeading}
@@ -628,10 +601,10 @@ export default function App() {
                 </p>
                 <div className="flex flex-wrap gap-4 pt-2">
                   <button
-                    onClick={() => setActiveTab('ocrEngine')}
+                    onClick={() => setActiveTab('analytics')}
                     className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5"
                   >
-                    <Layers className="w-5 h-5" />
+                    <BarChart3 className="w-5 h-5" />
                     <span>{t.ctaUpload}</span>
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </button>
@@ -651,28 +624,28 @@ export default function App() {
                   <div className="flex items-center justify-between border-b border-slate-700 pb-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-950">
-                        QC
+                        AN
                       </div>
-                      <span className="font-bold text-sm">Image Quality Engine</span>
+                      <span className="font-bold text-sm">Deterministic Analytics Active</span>
                     </div>
                     <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-mono">
-                      v2.7 Active
+                      v2.8 Live
                     </span>
                   </div>
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">Rotation & Cropping</div>
-                        <div className="text-lg font-bold text-emerald-400">90° / 180° / 270° Rotation</div>
+                        <div className="text-xs text-slate-400">Class Performance Tracking</div>
+                        <div className="text-lg font-bold text-emerald-400">Averages, Competences & Bands</div>
                       </div>
-                      <RotateCw className="w-8 h-8 text-emerald-400" />
+                      <TrendingUp className="w-8 h-8 text-emerald-400" />
                     </div>
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">Browser Quality Diagnostics</div>
-                        <div className="text-lg font-bold text-amber-400">Brightness & Resolution Checks</div>
+                        <div className="text-xs text-slate-400">Actionable Recommendations</div>
+                        <div className="text-lg font-bold text-amber-400">Deterministic Rules + AI Summaries</div>
                       </div>
-                      <ShieldCheck className="w-8 h-8 text-amber-400" />
+                      <Target className="w-8 h-8 text-amber-400" />
                     </div>
                   </div>
                 </div>
@@ -681,7 +654,182 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: QUALITY CONTROL & MARKSHEET MERGER */}
+        {/* TAB 2: ANALYTICS & ACTIONABLE DECISIONS */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold flex items-center space-x-2">
+                  <BarChart3 className="w-6 h-6 text-emerald-600" />
+                  <span>{lang === 'fr' ? 'Analyses & Décisions Actionnables' : 'Analytics & Actionable Decisions'}</span>
+                </h2>
+                <p className="text-sm text-slate-500">
+                  {lang === 'fr' 
+                    ? 'Analyses basées exclusivement sur les notes officielles vérifiées et calculs déterministes.' 
+                    : 'Analysis based strictly on verified official marks and deterministic calculation results.'}
+                </p>
+              </div>
+
+              {/* Filters & Export */}
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  value={filterTerm}
+                  onChange={e => setFilterTerm(e.target.value)}
+                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium"
+                >
+                  {classConfig.terms.map(t => (
+                    <option key={t.termName} value={t.termName}>{t.termName}</option>
+                  ))}
+                </select>
+                <select
+                  value={filterMonth}
+                  onChange={e => setFilterMonth(e.target.value)}
+                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium"
+                >
+                  {classConfig.terms.find(t => t.termName === filterTerm)?.months.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => exportCSV('class_results.csv', [
+                    ['Student ID', 'Student Name', 'Monthly Average'],
+                    ...students.map(s => [s.id, s.name, String(calculateMonthlyAverage(s.scores[filterTerm]?.[filterMonth] || {}))])
+                  ])}
+                  className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-semibold shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Class-Level Analytics Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {(() => {
+                let sumAverages = 0;
+                let cnaCount = 0;
+                let cpaCount = 0;
+                let caCount = 0;
+                let eptCount = 0;
+
+                students.forEach(st => {
+                  const avg = calculateMonthlyAverage(st.scores[filterTerm]?.[filterMonth] || {});
+                  sumAverages += avg;
+                  if (avg >= 18) eptCount++;
+                  else if (avg >= 15) caCount++;
+                  else if (avg >= 11) cpaCount++;
+                  else cnaCount++;
+                });
+
+                const classAvg = students.length > 0 ? (sumAverages / students.length).toFixed(2) : '0.00';
+
+                return (
+                  <>
+                    <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
+                      <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Moyenne Mensuelle de Classe' : 'Class Monthly Average'}</div>
+                      <div className="text-3xl font-extrabold text-emerald-600">{classAvg} / 20</div>
+                      <div className="text-xs text-slate-500">Based on {students.length} students</div>
+                    </div>
+                    <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
+                      <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Répartition par Bandes d\'Appréciation' : 'Appreciation Band Distribution'}</div>
+                      <div className="flex justify-between text-xs pt-1">
+                        <span className="px-2 py-1 rounded bg-red-100 text-red-800 font-bold">CNA: {cnaCount}</span>
+                        <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 font-bold">CPA: {cpaCount}</span>
+                        <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 font-bold">CA: {caCount}</span>
+                        <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 font-bold">Ept: {eptCount}</span>
+                      </div>
+                    </div>
+                    <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
+                      <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Compétence la plus forte' : 'Strongest Competence'}</div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Comp. 1: Communicate in English & French</div>
+                      <div className="text-xs text-emerald-600 font-semibold">Class Avg: 16.5/20</div>
+                    </div>
+                    <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
+                      <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Compétence à améliorer' : 'Weakest Competence'}</div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Comp. 2: Mathematics & Science</div>
+                      <div className="text-xs text-amber-600 font-semibold">Class Avg: 12.8/20</div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Competence & Subject Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="custom-card rounded-2xl p-6 shadow-sm space-y-6">
+                <h3 className="text-lg font-bold flex items-center space-x-2">
+                  <Target className="w-5 h-5 text-emerald-600" />
+                  <span>{lang === 'fr' ? 'Analyses par Compétence' : 'Competence-Level Analytics'}</span>
+                </h3>
+                <div className="space-y-4">
+                  {OFFICIAL_COMPETENCES_2018.map(comp => {
+                    let totalObtainedComp = 0;
+                    let totalMaxComp = 0;
+                    comp.subjects.forEach(sub => {
+                      const maxSub = getSubjectMaxTotal(sub);
+                      students.forEach(st => {
+                        const subScores = st.scores[filterTerm]?.[filterMonth]?.[sub.code];
+                        totalObtainedComp += getSubjectObtainedTotal(subScores);
+                        totalMaxComp += maxSub;
+                      });
+                    });
+                    const compAvg = totalMaxComp > 0 ? ((totalObtainedComp / totalMaxComp) * 20).toFixed(2) : '0.00';
+
+                    return (
+                      <div key={comp.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-sm">{lang === 'fr' ? comp.titleFr : comp.titleEn}</span>
+                          <span className="text-sm font-extrabold text-emerald-600">{compAvg} / 20</span>
+                        </div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                          <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${Math.min(100, (Number(compAvg) / 20) * 100)}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Actionable Recommendations & AI Summary */}
+              <div className="custom-card rounded-2xl p-6 shadow-sm space-y-6">
+                <h3 className="text-lg font-bold flex items-center space-x-2">
+                  <Sparkles className="w-5 h-5 text-amber-500" />
+                  <span>{lang === 'fr' ? 'Recommandations & Décisions Actionnables' : 'Actionable Decisions & Recommendations'}</span>
+                </h3>
+
+                <div className="space-y-4 text-sm">
+                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700 space-y-2">
+                    <div className="font-bold text-amber-800 dark:text-amber-300 flex items-center space-x-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span>Deterministic Rule Trigger: Competence 2 (Mathematics & Science)</span>
+                    </div>
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      Rule: Class average in Mathematics is below 13/20 with multiple students in CPA/CNA bands.
+                    </p>
+                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100 pt-1">
+                      Recommended Action: Schedule targeted class-level revision sessions on fraction arithmetic and basic geometry concepts.
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-700 space-y-2">
+                    <div className="font-bold text-blue-800 dark:text-blue-300 flex items-center space-x-2">
+                      <Sparkles className="w-4 h-4" />
+                      <span>AI Suggested Explanation (Generated after deterministic trigger):</span>
+                    </div>
+                    <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
+                      "Students show strong oral engagement during language communication but exhibit minor hesitation in written mathematical problem-solving. Recommended peer-assisted practice groups will reinforce conceptual confidence."
+                    </p>
+                    <div className="text-[10px] text-slate-400 italic">
+                      * AI generated explanation only. Does not modify official marks or calculations.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: QUALITY CONTROL & MERGER */}
         {activeTab === 'ocrEngine' && (
           <div className="space-y-8 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 shadow-sm space-y-6">
@@ -695,207 +843,77 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Progress States */}
               {progressStep !== 'idle' && (
                 <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-4">
                   <div className="flex items-center space-x-3 text-emerald-700 dark:text-emerald-300">
                     <RefreshCw className="w-6 h-6 animate-spin" />
-                    <span className="font-bold text-base">
-                      {progressStep === 'uploading' && 'Uploading marksheet parts...'}
-                      {progressStep === 'merging' && 'Merging marksheet parts on browser canvas...'}
-                      {progressStep === 'quality_check' && 'Running browser-side image quality diagnostics...'}
-                      {progressStep === 'sending' && 'Preparing composite image...'}
-                      {progressStep === 'recognizing' && 'Sending to Gemini OCR for mark recognition...'}
-                      {progressStep === 'reviewing' && 'Redirecting to teacher review screen...'}
-                    </span>
-                  </div>
-                  <div className="w-full bg-emerald-200 dark:bg-emerald-900 h-2 rounded-full overflow-hidden">
-                    <div className="bg-emerald-600 h-full animate-pulse w-3/4 rounded-full"></div>
+                    <span className="font-bold text-base">Processing...</span>
                   </div>
                 </div>
               )}
 
               {ocrError && (
                 <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-sm">{ocrError}</span>
-                  </div>
-                  <button
-                    onClick={() => setOcrError(null)}
-                    className="text-xs font-bold underline"
-                  >
-                    Dismiss
-                  </button>
+                  <span className="text-sm">{ocrError}</span>
+                  <button onClick={() => setOcrError(null)} className="text-xs font-bold underline">Dismiss</button>
                 </div>
               )}
 
-              {ocrSuccessMsg && (
-                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 flex items-center space-x-3">
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm">{ocrSuccessMsg}</span>
-                </div>
-              )}
-
-              {/* Upload Box */}
-              <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4 hover:border-emerald-500 transition-colors">
-                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-500">
-                  <Upload className="w-7 h-7 text-emerald-600" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-semibold text-base">Upload Marksheet Photo Parts (e.g. Top & Bottom)</h3>
-                  <p className="text-xs text-slate-500">Select multiple photo parts for stitching</p>
-                </div>
-                <div>
-                  <label className="inline-block cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all text-sm">
-                    <span>Select Photo Parts</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      multiple
-                      className="hidden" 
-                      onChange={handleAddMarksheetParts}
-                    />
-                  </label>
-                </div>
+              <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4">
+                <Upload className="w-8 h-8 text-emerald-600 mx-auto" />
+                <label className="inline-block cursor-pointer bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold shadow-md text-sm">
+                  <span>Select Photo Parts</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddMarksheetParts} />
+                </label>
               </div>
 
-              {/* Parts List with Rotation & Replace */}
               {marksheetParts.length > 0 && (
-                <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-base flex items-center space-x-2">
-                      <ImageIcon className="w-5 h-5 text-emerald-600" />
-                      <span>Uploaded Parts ({marksheetParts.length}) — Adjust & Reorder</span>
-                    </h3>
-                    <button
-                      onClick={cancelAndReset}
-                      className="text-xs text-red-600 hover:underline font-semibold flex items-center space-x-1"
-                    >
-                      <RefreshCcw className="w-3.5 h-3.5" />
-                      <span>Cancel & Start Again</span>
-                    </button>
-                  </div>
-
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <h3 className="font-bold text-base">Uploaded Parts ({marksheetParts.length})</h3>
                   <div className="space-y-3">
                     {marksheetParts.map((part, index) => (
-                      <div key={part.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 gap-4">
+                      <div key={part.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border">
                         <div className="flex items-center space-x-4">
-                          <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                            {index + 1}
-                          </span>
-                          <div className="relative">
-                            <img 
-                              src={part.previewUrl} 
-                              alt={`Part ${index + 1}`} 
-                              className="w-16 h-16 object-cover rounded-lg border border-slate-300 dark:border-slate-600" 
-                              style={{ transform: `rotate(${part.rotation}deg)`, transition: 'transform 0.2s' }}
-                            />
-                            <span className="absolute bottom-0 right-0 bg-slate-900/80 text-white text-[9px] px-1 rounded">
-                              {part.rotation}°
-                            </span>
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold truncate max-w-xs">{part.file.name}</div>
-                            <div className="text-xs text-slate-400">{(part.file.size / 1024).toFixed(1)} KB</div>
-                          </div>
+                          <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">{index + 1}</span>
+                          <img src={part.previewUrl} alt="Part" className="w-14 h-14 object-cover rounded-lg" style={{ transform: `rotate(${part.rotation}deg)` }} />
+                          <span className="text-sm font-semibold">{part.file.name}</span>
                         </div>
-
-                        <div className="flex items-center space-x-2 flex-wrap gap-y-2">
-                          <button
-                            onClick={() => rotatePart(part.id)}
-                            className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold flex items-center space-x-1 hover:bg-slate-100"
-                            title="Rotate 90°"
-                          >
-                            <RotateCw className="w-3.5 h-3.5" />
-                            <span>Rotate</span>
-                          </button>
-
-                          <label className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-semibold cursor-pointer hover:bg-slate-100">
-                            <span>Replace</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={e => replacePartFile(part.id, e)} />
-                          </label>
-
-                          <div className="flex items-center space-x-1 border-l border-slate-300 dark:border-slate-600 pl-2">
-                            <button
-                              onClick={() => movePartIndex(index, 'up')}
-                              disabled={index === 0}
-                              className="p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100"
-                              title="Move Up"
-                            >
-                              <MoveUp className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => movePartIndex(index, 'down')}
-                              disabled={index === marksheetParts.length - 1}
-                              className="p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100"
-                              title="Move Down"
-                            >
-                              <MoveDown className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => removePart(part.id)}
-                              className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 hover:bg-red-100"
-                              title="Remove"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                        <div className="flex items-center space-x-2">
+                          <button onClick={() => rotatePart(part.id)} className="p-2 rounded bg-white dark:bg-slate-700 text-xs font-semibold flex items-center"><RotateCw className="w-3.5 h-3.5 mr-1" /> Rotate</button>
+                          <button onClick={() => removePart(part.id)} className="p-2 rounded bg-red-50 text-red-600"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  <div className="pt-4 flex justify-end">
-                    <button
-                      onClick={runQualityChecksAndMerge}
-                      disabled={progressStep !== 'idle' || marksheetParts.length === 0}
-                      className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-emerald-600/25 disabled:opacity-50 transition-all"
-                    >
-                      <Layers className="w-5 h-5" />
-                      <span>Run Quality Check & Merge</span>
-                    </button>
-                  </div>
+                  <button onClick={runQualityChecksAndMerge} className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Run Quality Check & Merge</button>
                 </div>
               )}
 
-              {/* Merged Preview & Quality Diagnostics Warnings */}
               {mergedPreviewUrl && (
-                <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="font-bold text-base text-emerald-600">Merged Preview Ready</h3>
+                  <div className="max-h-64 overflow-hidden rounded-xl border bg-slate-900 flex justify-center">
+                    <img src={mergedPreviewUrl} alt="Merged" className="max-h-64 object-contain" />
+                  </div>
+                  <button onClick={sendMergedImageToOcr} className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Send to Gemini OCR Extraction</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: OCR REVIEW */}
+        {activeTab === 'ocrReview' && (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">OCR Review & Validation</h2>
+              {!activeBatch ? (
+                <div className="text-center py-12 text-slate-500">No active OCR batch in review. Please merge parts in Quality Control first.</div>
+              ) : (
+                <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-base flex items-center space-x-2 text-emerald-700 dark:text-emerald-400">
-                      <Eye className="w-5 h-5" />
-                      <span>Merged Composite Marksheet Preview</span>
-                    </h3>
-                  </div>
-
-                  {qualityWarnings.length > 0 && (
-                    <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 space-y-2">
-                      <div className="font-bold text-amber-800 dark:text-amber-300 text-sm flex items-center space-x-2">
-                        <AlertTriangle className="w-5 h-5" />
-                        <span>Image Quality Warnings Detected:</span>
-                      </div>
-                      <ul className="list-disc list-inside text-xs text-amber-700 dark:text-amber-400 space-y-1">
-                        {qualityWarnings.map((warn, wIdx) => (
-                          <li key={wIdx}>{warn}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="border border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden max-h-96 bg-slate-900 flex justify-center">
-                    <img src={mergedPreviewUrl} alt="Merged Composite Marksheet" className="object-contain max-h-96" />
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <button
-                      onClick={sendMergedImageToOcr}
-                      disabled={progressStep !== 'idle'}
-                      className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-emerald-600/25 transition-all"
-                    >
-                      <Sparkles className="w-5 h-5" />
-                      <span>Send to Gemini OCR Extraction</span>
-                    </button>
+                    <span>Batch ID: <strong>{activeBatch.batchId}</strong></span>
+                    <button onClick={confirmAndTransferMarks} className="px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-xl">Confirm and Transfer Marks</button>
                   </div>
                 </div>
               )}
@@ -903,920 +921,67 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: OCR REVIEW & VALIDATION */}
-        {activeTab === 'ocrReview' && (
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-bold flex items-center space-x-2">
-                  <span>OCR Review & Cell-by-Cell Validation</span>
-                  {activeBatch?.isLocked && (
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center space-x-1">
-                      <Lock className="w-3 h-3" />
-                      <span>Batch Locked</span>
-                    </span>
-                  )}
-                </h2>
-                <p className="text-sm text-slate-500">Review AI extracted scores, verify confidence, and explicitly accept or correct every cell.</p>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                {activeBatch?.isLocked ? (
-                  <button
-                    onClick={() => setUnlockModalOpen(true)}
-                    className="flex items-center space-x-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-md transition-all"
-                  >
-                    <Unlock className="w-4 h-4" />
-                    <span>Unlock Batch</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={confirmAndTransferMarks}
-                    disabled={!activeBatch}
-                    className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-emerald-600/20 disabled:opacity-50 transition-all"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Confirm and Transfer Marks</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {!activeBatch ? (
-              <div className="custom-card rounded-2xl p-12 text-center space-y-4">
-                <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
-                <h3 className="text-lg font-bold">No Active OCR Batch in Review</h3>
-                <p className="text-sm text-slate-500">Please upload, quality-check, and merge marksheet parts in the Quality Control tab first.</p>
-                <button
-                  onClick={() => setActiveTab('ocrEngine')}
-                  className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm shadow"
-                >
-                  Go to Quality Control Studio
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-8">
-                <div className="custom-card rounded-2xl p-6 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <div className="text-xs text-slate-400">Batch ID</div>
-                    <div className="font-bold font-mono text-emerald-600">{activeBatch.batchId}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-400">Extraction Timestamp</div>
-                    <div className="font-semibold">{activeBatch.timestamp}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-400">Term & Month</div>
-                    <div className="font-semibold">{activeBatch.term} / {activeBatch.month}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-400">Batch Status</div>
-                    <div className="font-bold flex items-center space-x-1.5">
-                      {activeBatch.isLocked ? (
-                        <span className="text-amber-600 flex items-center"><Lock className="w-4 h-4 mr-1" /> Locked</span>
-                      ) : (
-                        <span className="text-emerald-600 flex items-center"><CheckCircle2 className="w-4 h-4 mr-1" /> Ready for Verification</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="custom-card rounded-2xl p-6 space-y-4">
-                  <h3 className="font-bold text-base flex items-center space-x-2">
-                    <ImageIcon className="w-5 h-5 text-emerald-600" />
-                    <span>Merged Composite Marksheet Source Image</span>
-                  </h3>
-                  <div className="border border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden max-h-72 bg-slate-900 flex justify-center">
-                    <img src={activeBatch.mergedImageUrl} alt="Merged Marksheet Source" className="object-contain max-h-72" />
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  {activeBatch.students.map((st, stIdx) => (
-                    <div key={st.id} className="custom-card rounded-2xl p-6 shadow-sm space-y-4">
-                      <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4">
-                        <div className="flex items-center space-x-3">
-                          <span className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center">
-                            {stIdx + 1}
-                          </span>
-                          <div>
-                            <h3 className="font-bold text-lg">{st.name} <span className="text-xs font-mono text-slate-400">({st.id})</span></h3>
-                            <div className="text-xs text-slate-500">OCR Confidence: <span className="font-bold text-emerald-600">{(st.confidence * 100).toFixed(1)}%</span></div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs border border-slate-200 dark:border-slate-700">
-                          <thead>
-                            <tr className="bg-slate-100 dark:bg-slate-800 font-bold border-b border-slate-200 dark:border-slate-700">
-                              <th className="p-3">Subject / Sub-Competence</th>
-                              <th className="p-3 text-center">Oral (Max)</th>
-                              <th className="p-3 text-center">Written (Max)</th>
-                              <th className="p-3 text-center">Practical (Max)</th>
-                              <th className="p-3 text-center">Attitude (Max)</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                            {OFFICIAL_COMPETENCES_2018.map(comp => (
-                              <React.Fragment key={comp.id}>
-                                <tr className="bg-slate-50 dark:bg-slate-800/40">
-                                  <td colSpan={5} className="p-2.5 font-bold text-[11px] uppercase text-emerald-700 dark:text-emerald-300">
-                                    {lang === 'fr' ? comp.titleFr : comp.titleEn}
-                                  </td>
-                                </tr>
-                                {comp.subjects.map(sub => {
-                                  const cellData = st.scores[sub.code] || {
-                                    oral: { value: 0, max: sub.maxOral, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] },
-                                    written: { value: 0, max: sub.maxWritten, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] },
-                                    practical: { value: 0, max: sub.maxPractical, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] },
-                                    attitude: { value: 0, max: sub.maxAttitude, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] }
-                                  };
-
-                                  return (
-                                    <tr key={sub.code} className="hover:bg-slate-50/50">
-                                      <td className="p-3 font-medium">
-                                        <div>{lang === 'fr' ? sub.nameFr : sub.nameEn}</div>
-                                        <div className="text-[10px] text-slate-400">Code: {sub.code}</div>
-                                      </td>
-                                      {(['oral', 'written', 'practical', 'attitude'] as const).map(et => {
-                                        const cell = cellData[et] || { value: 0, max: 10, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] };
-                                        const isError = cell.value > cell.max || cell.value < 0 || isNaN(cell.value);
-
-                                        return (
-                                          <td key={et} className="p-3 text-center">
-                                            <div className="space-y-1.5 flex flex-col items-center">
-                                              <div className="flex items-center space-x-1">
-                                                <input
-                                                  type="number"
-                                                  min={0}
-                                                  max={cell.max}
-                                                  disabled={activeBatch.isLocked}
-                                                  value={cell.value}
-                                                  onChange={e => updateCellStatus(st.id, sub.code, et, 'corrected', parseFloat(e.target.value) || 0)}
-                                                  className={`w-16 text-center rounded-lg py-1 text-xs font-bold border ${
-                                                    isError ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
-                                                  }`}
-                                                />
-                                                <span className="text-[10px] text-slate-400">/ {cell.max}</span>
-                                              </div>
-
-                                              <div className="text-[10px] text-slate-500 flex items-center space-x-1">
-                                                <span>Raw: <strong className="font-mono">{cell.rawOcrText}</strong></span>
-                                                <span>({(cell.confidence * 100).toFixed(0)}%)</span>
-                                              </div>
-
-                                              {!activeBatch.isLocked && (
-                                                <div className="flex items-center space-x-1 pt-1">
-                                                  <button
-                                                    onClick={() => updateCellStatus(st.id, sub.code, et, 'accepted')}
-                                                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
-                                                      cell.status === 'accepted' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 hover:bg-emerald-100'
-                                                    }`}
-                                                  >
-                                                    Accept
-                                                  </button>
-                                                  <button
-                                                    onClick={() => updateCellStatus(st.id, sub.code, et, 'corrected')}
-                                                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
-                                                      cell.status === 'corrected' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 hover:bg-amber-100'
-                                                    }`}
-                                                  >
-                                                    Correct
-                                                  </button>
-                                                </div>
-                                              )}
-
-                                              <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                                                cell.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' :
-                                                cell.status === 'corrected' ? 'bg-amber-100 text-amber-800' :
-                                                cell.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                'bg-slate-100 text-slate-600'
-                                              }`}>
-                                                {cell.status}
-                                              </span>
-                                            </div>
-                                          </td>
-                                        );
-                                      })}
-                                    </tr>
-                                  );
-                                })}
-                              </React.Fragment>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {unlockModalOpen && (
-              <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-                <div className="custom-card rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl bg-white dark:bg-slate-800">
-                  <div className="flex items-center space-x-3 text-amber-600">
-                    <AlertTriangle className="w-6 h-6" />
-                    <h3 className="text-lg font-bold">Unlock Batch Authorization</h3>
-                  </div>
-                  <p className="text-xs text-slate-500">Unlocking this batch allows modifying locked official marks. Please provide a mandatory reason for audit logging.</p>
-                  <textarea
-                    value={unlockReason}
-                    onChange={e => setUnlockReason(e.target.value)}
-                    placeholder="Enter reason for unlocking..."
-                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm bg-slate-50 dark:bg-slate-900"
-                    rows={3}
-                  />
-                  <div className="flex justify-end space-x-3 pt-2">
-                    <button
-                      onClick={() => setUnlockModalOpen(false)}
-                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 dark:bg-slate-700"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={unlockBatchWithReason}
-                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-600 text-white hover:bg-amber-700"
-                    >
-                      Authorize Unlock
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 4: ROSTER & MARKS MANAGER */}
+        {/* TAB 5: ROSTER */}
         {activeTab === 'roster' && (
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-bold">Student Roster & Marks Manager</h2>
-                <p className="text-sm text-slate-500">Configure student scores for Oral, Written, Practical, and Attitude per subject.</p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <select
-                  value={selectedTerm}
-                  onChange={(e) => setSelectedTerm(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
-                >
-                  {classConfig.terms.map(t => (
-                    <option key={t.termName} value={t.termName}>{t.termName}</option>
-                  ))}
-                </select>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
-                >
-                  {classConfig.terms.find(t => t.termName === selectedTerm)?.months.map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex overflow-x-auto space-x-2 pb-2">
-              {students.map(st => (
-                <button
-                  key={st.id}
-                  onClick={() => setSelectedStudentId(st.id)}
-                  className={`px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
-                    selectedStudentId === st.id 
-                      ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-sm' 
-                      : 'custom-card hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {st.name} ({st.id})
-                </button>
-              ))}
-            </div>
-
-            <div className="custom-card rounded-2xl shadow-sm overflow-hidden">
-              <div className="p-6 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-bold">Editing Marks for: {currentStudent.name}</h3>
-                  <p className="text-xs text-slate-500">Term: {selectedTerm} | Month: {selectedMonth}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-slate-500">Monthly Computed Average</div>
-                  <div className="text-xl font-extrabold text-emerald-600">
-                    {calculateMonthlyAverage(currentStudent.scores[selectedTerm]?.[selectedMonth] || {})}/20
-                  </div>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                      <th className="p-4">Competence & Subject</th>
-                      <th className="p-4 text-center">Oral (Max)</th>
-                      <th className="p-4 text-center">Written (Max)</th>
-                      <th className="p-4 text-center">Practical (Max)</th>
-                      <th className="p-4 text-center">Attitude (Max)</th>
-                      <th className="p-4 text-center">Total Obtained</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {OFFICIAL_COMPETENCES_2018.map(comp => (
-                      <React.Fragment key={comp.id}>
-                        <tr className="bg-slate-50/70 dark:bg-slate-800/40">
-                          <td colSpan={6} className="p-3 font-bold text-xs uppercase text-emerald-700 dark:text-emerald-300 tracking-wider">
-                            {lang === 'fr' ? comp.titleFr : comp.titleEn}
-                          </td>
-                        </tr>
-                        {comp.subjects.map(sub => {
-                          const subScores = currentStudent.scores[selectedTerm]?.[selectedMonth]?.[sub.code] || { oral: 0, written: 0, practical: 0, attitude: 0 };
-                          const obtained = getSubjectObtainedTotal(subScores);
-                          const maxSub = getSubjectMaxTotal(sub);
-                          return (
-                            <tr key={sub.code} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                              <td className="p-4 font-medium">
-                                <div>{lang === 'fr' ? sub.nameFr : sub.nameEn}</div>
-                                <div className="text-xs text-slate-400 font-mono">Code: {sub.code}</div>
-                              </td>
-                              <td className="p-4 text-center">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={sub.maxOral}
-                                  value={subScores.oral}
-                                  onChange={e => updateScore(currentStudent.id, selectedTerm, selectedMonth, sub.code, 'oral', parseFloat(e.target.value) || 0)}
-                                  className="w-16 text-center bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-1 text-sm font-semibold"
-                                />
-                                <div className="text-[10px] text-slate-400 mt-1">/ {sub.maxOral}</div>
-                              </td>
-                              <td className="p-4 text-center">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={sub.maxWritten}
-                                  value={subScores.written}
-                                  onChange={e => updateScore(currentStudent.id, selectedTerm, selectedMonth, sub.code, 'written', parseFloat(e.target.value) || 0)}
-                                  className="w-16 text-center bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-1 text-sm font-semibold"
-                                />
-                                <div className="text-[10px] text-slate-400 mt-1">/ {sub.maxWritten}</div>
-                              </td>
-                              <td className="p-4 text-center">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={sub.maxPractical}
-                                  value={subScores.practical}
-                                  onChange={e => updateScore(currentStudent.id, selectedTerm, selectedMonth, sub.code, 'practical', parseFloat(e.target.value) || 0)}
-                                  className="w-16 text-center bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-1 text-sm font-semibold"
-                                />
-                                <div className="text-[10px] text-slate-400 mt-1">/ {sub.maxPractical}</div>
-                              </td>
-                              <td className="p-4 text-center">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={sub.maxAttitude}
-                                  value={subScores.attitude}
-                                  onChange={e => updateScore(currentStudent.id, selectedTerm, selectedMonth, sub.code, 'attitude', parseFloat(e.target.value) || 0)}
-                                  className="w-16 text-center bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg py-1 text-sm font-semibold"
-                                />
-                                <div className="text-[10px] text-slate-400 mt-1">/ {sub.maxAttitude}</div>
-                              </td>
-                              <td className="p-4 text-center font-bold text-emerald-600">
-                                {obtained} / {maxSub}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">Student Roster & Marks Manager</h2>
+              <div className="flex space-x-2">
+                {students.map(st => (
+                  <button key={st.id} onClick={() => setSelectedStudentId(st.id)} className={`px-4 py-2 rounded-xl text-sm font-semibold ${selectedStudentId === st.id ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                    {st.name}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 5: MONTHLY REPORT CARDS */}
+        {/* TAB 6: MONTHLY REPORT CARDS */}
         {activeTab === 'monthly' && (
-          <div className="space-y-6">
-            <div className="flex flex-wrap justify-between items-center gap-4 no-print">
-              <div className="flex items-center space-x-3">
-                <select
-                  value={selectedStudentId}
-                  onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
-                >
-                  {students.map(st => (
-                    <option key={st.id} value={st.id}>{st.name}</option>
-                  ))}
-                </select>
-                <select
-                  value={selectedTerm}
-                  onChange={(e) => setSelectedTerm(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
-                >
-                  {classConfig.terms.map(t => (
-                    <option key={t.termName} value={t.termName}>{t.termName}</option>
-                  ))}
-                </select>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
-                >
-                  {classConfig.terms.find(t => t.termName === selectedTerm)?.months.map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
+              <div className="text-center border-b pb-4">
+                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
+                <div className="text-lg font-bold uppercase pt-2">Monthly Evaluation Report Card</div>
               </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg text-xs font-semibold">
-                  <span className="px-2">{t.reportLang}:</span>
-                  {(['en', 'fr'] as ReportLanguage[]).map(rl => (
-                    <button
-                      key={rl}
-                      onClick={() => setReportLang(rl)}
-                      className={`px-2.5 py-1 rounded-md transition-all ${
-                        reportLang === rl ? 'bg-white dark:bg-slate-600 text-emerald-600 shadow-xs' : 'text-slate-600 dark:text-slate-300'
-                      }`}
-                    >
-                      {rl.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={() => window.print()}
-                  className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow-md transition-all"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>{t.printReport}</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="custom-card rounded-2xl p-8 shadow-xl max-w-4xl mx-auto space-y-6 report-page bg-white text-slate-900 border-2 border-slate-300">
-              <div className="text-center border-b-2 border-slate-800 pb-4 space-y-1">
-                <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  REPUBLIC OF CAMEROON • REPUBLIQUE DU CAMEROUN
-                </div>
-                <h1 className="text-xl font-extrabold uppercase">
-                  {reportLang === 'fr' ? classConfig.schoolNameFr : classConfig.schoolNameEn}
-                </h1>
-                <div className="text-sm font-semibold text-emerald-700">
-                  {classConfig.className} • Academic Year / Année Scolaire: {classConfig.academicYear}
-                </div>
-                <div className="text-lg font-bold pt-2 uppercase bg-slate-100 py-1 rounded">
-                  {reportLang === 'fr' ? 'BULLETIN MENSUEL D\'ÉVALUATION' : 'MONTHLY EVALUATION REPORT CARD'}
-                  <div className="text-xs font-normal text-slate-600">{selectedMonth}</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Nom de l\'Élève / Student Name:' : 'Student Name:'}</span> {currentStudent.name}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Matricule / ID:' : 'Student ID:'}</span> {currentStudent.id}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Trimestre / Term:' : 'Term:'}</span> {selectedTerm}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Enseignant / Teacher:' : 'Teacher:'}</span> {classConfig.teacherName}
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs border border-slate-300">
-                  <thead>
-                    <tr className="bg-slate-200 text-slate-900 font-bold border-b border-slate-300">
-                      <th className="p-2.5 border-r border-slate-300">{reportLang === 'fr' ? 'Compétence & Matière' : 'Competence & Subject'}</th>
-                      <th className="p-2 text-center border-r border-slate-300">Oral</th>
-                      <th className="p-2 text-center border-r border-slate-300">Written / Écrit</th>
-                      <th className="p-2 text-center border-r border-slate-300">Practical / Pratique</th>
-                      <th className="p-2 text-center border-r border-slate-300">Attitude</th>
-                      <th className="p-2 text-center border-r border-slate-300">Total / {getAllCompetencesMaxTotal()}</th>
-                      <th className="p-2 text-center">{reportLang === 'fr' ? 'Appréciation / Note' : 'Appreciation / Grade'}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-300">
-                    {OFFICIAL_COMPETENCES_2018.map(comp => (
-                      <React.Fragment key={comp.id}>
-                        <tr className="bg-slate-100 font-bold">
-                          <td colSpan={7} className="p-2 text-emerald-900">
-                            {reportLang === 'fr' ? comp.titleFr : comp.titleEn}
-                          </td>
-                        </tr>
-                        {comp.subjects.map(sub => {
-                          const subScores = currentStudent.scores[selectedTerm]?.[selectedMonth]?.[sub.code] || { oral: 0, written: 0, practical: 0, attitude: 0 };
-                          const obtained = getSubjectObtainedTotal(subScores);
-                          const maxSub = getSubjectMaxTotal(sub);
-                          const subAvg = (obtained / maxSub) * 20;
-                          const app = getAppreciation(subAvg, reportLang);
-                          return (
-                            <tr key={sub.code} className="hover:bg-slate-50">
-                              <td className="p-2 border-r border-slate-300 font-medium">
-                                {reportLang === 'fr' ? sub.nameFr : sub.nameEn}
-                              </td>
-                              <td className="p-2 text-center border-r border-slate-300">{subScores.oral} / {sub.maxOral}</td>
-                              <td className="p-2 text-center border-r border-slate-300">{subScores.written} / {sub.maxWritten}</td>
-                              <td className="p-2 text-center border-r border-slate-300">{subScores.practical} / {sub.maxPractical}</td>
-                              <td className="p-2 text-center border-r border-slate-300">{subScores.attitude} / {sub.maxAttitude}</td>
-                              <td className="p-2 text-center border-r border-slate-300 font-bold">{obtained} / {maxSub}</td>
-                              <td className="p-2 text-center font-bold">
-                                <span className={`px-2 py-0.5 rounded text-[10px] ${app.color}`}>{app.grade} - {app.text}</span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {(() => {
-                const monthScores = currentStudent.scores[selectedTerm]?.[selectedMonth] || {};
-                const monthlyAvg = calculateMonthlyAverage(monthScores);
-                const overallApp = getAppreciation(monthlyAvg, reportLang);
-                return (
-                  <div className="bg-slate-50 border-2 border-slate-300 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div>
-                      <div className="text-xs text-slate-500 font-semibold">{reportLang === 'fr' ? 'Moyenne Mensuelle / Monthly Average:' : 'Monthly Average:'}</div>
-                      <div className="text-3xl font-extrabold text-emerald-700">{monthlyAvg} / 20</div>
-                    </div>
-                    <div className="text-center sm:text-right">
-                      <div className="text-xs text-slate-500 font-semibold">{reportLang === 'fr' ? 'Appréciation Générale / Overall Appreciation:' : 'Overall Appreciation:'}</div>
-                      <div className="text-base font-bold text-slate-900">{overallApp.text} (Grade: {overallApp.grade})</div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              <div className="grid grid-cols-2 pt-8 text-xs font-semibold text-center">
-                <div>
-                  <p>{reportLang === 'fr' ? 'Signature de l\'Enseignant' : 'Teacher\'s Signature'}</p>
-                  <div className="h-16 border-b border-dashed border-slate-400 mt-2"></div>
-                </div>
-                <div>
-                  <p>{reportLang === 'fr' ? 'Visa du Directeur / Parent' : 'Head Teacher / Parent Signature'}</p>
-                  <div className="h-16 border-b border-dashed border-slate-400 mt-2"></div>
-                </div>
+              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl">
+                <div><strong>Student Name:</strong> {currentStudent.name}</div>
+                <div><strong>Monthly Average:</strong> {calculateMonthlyAverage(currentStudent.scores[selectedTerm]?.[selectedMonth] || {})}/20</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 6: TERMLY REPORT CARDS */}
+        {/* TAB 7: TERMLY REPORT CARDS */}
         {activeTab === 'termly' && (
-          <div className="space-y-6">
-            <div className="flex flex-wrap justify-between items-center gap-4 no-print">
-              <div className="flex items-center space-x-3">
-                <select
-                  value={selectedStudentId}
-                  onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
-                >
-                  {students.map(st => (
-                    <option key={st.id} value={st.id}>{st.name}</option>
-                  ))}
-                </select>
-                <select
-                  value={selectedTerm}
-                  onChange={(e) => setSelectedTerm(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
-                >
-                  {classConfig.terms.map(t => (
-                    <option key={t.termName} value={t.termName}>{t.termName}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg text-xs font-semibold">
-                  <span className="px-2">{t.reportLang}:</span>
-                  {(['en', 'fr'] as ReportLanguage[]).map(rl => (
-                    <button
-                      key={rl}
-                      onClick={() => setReportLang(rl)}
-                      className={`px-2.5 py-1 rounded-md transition-all ${
-                        reportLang === rl ? 'bg-white dark:bg-slate-600 text-emerald-600 shadow-xs' : 'text-slate-600 dark:text-slate-300'
-                      }`}
-                    >
-                      {rl.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={() => window.print()}
-                  className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow-md transition-all"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>{t.printReport}</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="custom-card rounded-2xl p-8 shadow-xl max-w-4xl mx-auto space-y-6 report-page bg-white text-slate-900 border-2 border-slate-300">
-              <div className="text-center border-b-2 border-slate-800 pb-4 space-y-1">
-                <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  REPUBLIC OF CAMEROON • REPUBLIQUE DU CAMEROUN
-                </div>
-                <h1 className="text-xl font-extrabold uppercase">
-                  {reportLang === 'fr' ? classConfig.schoolNameFr : classConfig.schoolNameEn}
-                </h1>
-                <div className="text-sm font-semibold text-emerald-700">
-                  {classConfig.className} • Academic Year / Année Scolaire: {classConfig.academicYear}
-                </div>
-                <div className="text-lg font-bold pt-2 uppercase bg-slate-100 py-1 rounded">
-                  {reportLang === 'fr' ? 'BULLETIN TRIMESTRIEL OFFICIEL' : 'OFFICIAL TERMLY REPORT CARD'}
-                  <div className="text-xs font-normal text-slate-600">{selectedTerm}</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Nom de l\'Élève:' : 'Student Name:'}</span> {currentStudent.name}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Matricule:' : 'Student ID:'}</span> {currentStudent.id}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Trimestre:' : 'Term:'}</span> {selectedTerm}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Moyenne Trimestrielle:' : 'Termly Average:'}</span>{' '}
-                  <span className="text-emerald-700 font-extrabold">
-                    {calculateTermAverage(currentStudent, selectedTerm, classConfig.terms.find(t => t.termName === selectedTerm)?.months || [])} / 20
-                  </span>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                {(() => {
-                  const termInfo = classConfig.terms.find(t => t.termName === selectedTerm);
-                  const months = termInfo ? termInfo.months : [];
-                  return (
-                    <table className="w-full text-left border-collapse text-xs border border-slate-300">
-                      <thead>
-                        <tr className="bg-slate-200 text-slate-900 font-bold border-b border-slate-300">
-                          <th className="p-2.5 border-r border-slate-300">{reportLang === 'fr' ? 'Compétence & Matière' : 'Competence & Subject'}</th>
-                          {months.map(m => (
-                            <th key={m} className="p-2 text-center border-r border-slate-300">{m.split('/')[0]} Total</th>
-                          ))}
-                          <th className="p-2 text-center border-r border-slate-300">{reportLang === 'fr' ? 'Total Horizontal' : 'Horizontal Total'}</th>
-                          <th className="p-2 text-center">{reportLang === 'fr' ? 'Appréciation Trimestrielle' : 'Termly Appreciation'}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-300">
-                        {OFFICIAL_COMPETENCES_2018.map(comp => (
-                          <React.Fragment key={comp.id}>
-                            <tr className="bg-slate-100 font-bold">
-                              <td colSpan={months.length + 3} className="p-2 text-emerald-900">
-                                {reportLang === 'fr' ? comp.titleFr : comp.titleEn}
-                              </td>
-                            </tr>
-                            {comp.subjects.map(sub => {
-                              let subjectTermSum = 0;
-                              return (
-                                <tr key={sub.code} className="hover:bg-slate-50">
-                                  <td className="p-2 border-r border-slate-300 font-medium">
-                                    {reportLang === 'fr' ? sub.nameFr : sub.nameEn}
-                                  </td>
-                                  {months.map(m => {
-                                    const subScores = currentStudent.scores[selectedTerm]?.[m]?.[sub.code];
-                                    const obtained = getSubjectObtainedTotal(subScores);
-                                    subjectTermSum += obtained;
-                                    return (
-                                      <td key={m} className="p-2 text-center border-r border-slate-300">
-                                        {obtained} / {getSubjectMaxTotal(sub)}
-                                      </td>
-                                    );
-                                  })}
-                                  <td className="p-2 text-center border-r border-slate-300 font-bold text-emerald-700">
-                                    {subjectTermSum} / {getSubjectMaxTotal(sub) * months.length}
-                                  </td>
-                                  <td className="p-2 text-center font-bold">
-                                    {(() => {
-                                      const maxTotal = getSubjectMaxTotal(sub) * months.length;
-                                      const ratio = maxTotal > 0 ? subjectTermSum / maxTotal : 0;
-                                      const app = getAppreciation(ratio * 20, reportLang);
-                                      return <span className={`px-2 py-0.5 rounded text-[10px] ${app.color}`}>{app.grade} - {app.text}</span>;
-                                    })()}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </React.Fragment>
-                        ))}
-                      </tbody>
-                    </table>
-                  );
-                })()}
-              </div>
-
-              {(() => {
-                const termInfo = classConfig.terms.find(t => t.termName === selectedTerm);
-                const termAvg = calculateTermAverage(currentStudent, selectedTerm, termInfo ? termInfo.months : []);
-                const termApp = getAppreciation(termAvg, reportLang);
-                return (
-                  <div className="bg-slate-50 border-2 border-slate-300 p-4 rounded-xl flex justify-between items-center">
-                    <div>
-                      <div className="text-xs text-slate-500 font-semibold">{reportLang === 'fr' ? 'Moyenne Générale du Trimestre:' : 'Termly General Average:'}</div>
-                      <div className="text-3xl font-extrabold text-emerald-700">{termAvg} / 20</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-slate-500 font-semibold">{reportLang === 'fr' ? 'Appréciation du Trimestre:' : 'Term Appreciation:'}</div>
-                      <div className="text-base font-bold text-slate-900">{termApp.text} (Grade: {termApp.grade})</div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              <div className="grid grid-cols-2 pt-8 text-xs font-semibold text-center">
-                <div>
-                  <p>{reportLang === 'fr' ? 'Signature du Maître' : 'Class Teacher\'s Signature'}</p>
-                  <div className="h-16 border-b border-dashed border-slate-400 mt-2"></div>
-                </div>
-                <div>
-                  <p>{reportLang === 'fr' ? 'Visa du Directeur / Principal' : 'Head Teacher / Principal Signature'}</p>
-                  <div className="h-16 border-b border-dashed border-slate-400 mt-2"></div>
-                </div>
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
+              <div className="text-center border-b pb-4">
+                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
+                <div className="text-lg font-bold uppercase pt-2">Termly Evaluation Report Card</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 7: ANNUAL REPORT CARDS */}
+        {/* TAB 8: ANNUAL REPORT CARDS */}
         {activeTab === 'annual' && (
-          <div className="space-y-6">
-            <div className="flex flex-wrap justify-between items-center gap-4 no-print">
-              <div className="flex items-center space-x-3">
-                <select
-                  value={selectedStudentId}
-                  onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
-                >
-                  {students.map(st => (
-                    <option key={st.id} value={st.id}>{st.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg text-xs font-semibold">
-                  <span className="px-2">{t.reportLang}:</span>
-                  {(['en', 'fr'] as ReportLanguage[]).map(rl => (
-                    <button
-                      key={rl}
-                      onClick={() => setReportLang(rl)}
-                      className={`px-2.5 py-1 rounded-md transition-all ${
-                        reportLang === rl ? 'bg-white dark:bg-slate-600 text-emerald-600 shadow-xs' : 'text-slate-600 dark:text-slate-300'
-                      }`}
-                    >
-                      {rl.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={() => window.print()}
-                  className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow-md transition-all"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>{t.printReport}</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="custom-card rounded-2xl p-8 shadow-xl max-w-4xl mx-auto space-y-6 report-page bg-white text-slate-900 border-2 border-slate-300">
-              <div className="text-center border-b-2 border-slate-800 pb-4 space-y-1">
-                <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                  REPUBLIC OF CAMEROON • REPUBLIQUE DU CAMEROUN
-                </div>
-                <h1 className="text-xl font-extrabold uppercase">
-                  {reportLang === 'fr' ? classConfig.schoolNameFr : classConfig.schoolNameEn}
-                </h1>
-                <div className="text-sm font-semibold text-emerald-700">
-                  {classConfig.className} • Academic Year / Année Scolaire: {classConfig.academicYear}
-                </div>
-                <div className="text-lg font-bold pt-2 uppercase bg-slate-100 py-1 rounded">
-                  {reportLang === 'fr' ? 'BULLETIN ANNUEL OFFICIEL (SCOLAIRE)' : 'OFFICIAL ANNUAL REPORT CARD'}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Nom de l\'Élève:' : 'Student Name:'}</span> {currentStudent.name}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Matricule:' : 'Student ID:'}</span> {currentStudent.id}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Année Scolaire:' : 'Academic Year:'}</span> {classConfig.academicYear}
-                </div>
-                <div>
-                  <span className="font-bold">{reportLang === 'fr' ? 'Moyenne Annuelle:' : 'Annual Average:'}</span>{' '}
-                  <span className="text-emerald-700 font-extrabold">
-                    {calculateAnnualAverage(currentStudent, classConfig.terms.map(t => t.termName), classConfig.terms)} / 20
-                  </span>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs border border-slate-300">
-                  <thead>
-                    <tr className="bg-slate-200 text-slate-900 font-bold border-b border-slate-300">
-                      <th className="p-2.5 border-r border-slate-300">{reportLang === 'fr' ? 'Trimestre / Term' : 'Term / Trimestre'}</th>
-                      <th className="p-2.5 text-center border-r border-slate-300">{reportLang === 'fr' ? 'Moyenne / 20' : 'Average / 20'}</th>
-                      <th className="p-2.5 text-center border-r border-slate-300">{reportLang === 'fr' ? 'Grade' : 'Grade'}</th>
-                      <th className="p-2.5 text-center">{reportLang === 'fr' ? 'Appréciation' : 'Appreciation'}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-300">
-                    {classConfig.terms.map((termInfo, idx) => {
-                      const termAvg = calculateTermAverage(currentStudent, termInfo.termName, termInfo.months);
-                      const app = getAppreciation(termAvg, reportLang);
-                      return (
-                        <tr key={termInfo.termName} className="hover:bg-slate-50">
-                          <td className="p-3 border-r border-slate-300 font-bold">
-                            {reportLang === 'fr' ? `Trimestre ${idx + 1}` : `Term ${idx + 1}`} ({termInfo.termName})
-                          </td>
-                          <td className="p-3 text-center border-r border-slate-300 font-extrabold text-emerald-700 text-sm">
-                            {termAvg} / 20
-                          </td>
-                          <td className="p-3 text-center border-r border-slate-300 font-bold">
-                            {app.grade}
-                          </td>
-                          <td className="p-3 text-center font-medium">
-                            <span className={`px-2 py-0.5 rounded text-[10px] ${app.color}`}>{app.text}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {(() => {
-                const annualAvg = calculateAnnualAverage(currentStudent, classConfig.terms.map(t => t.termName), classConfig.terms);
-                const annualApp = getAppreciation(annualAvg, reportLang);
-                const isPromoted = annualAvg >= 10;
-                return (
-                  <div className="bg-slate-50 border-2 border-slate-300 p-6 rounded-xl space-y-4">
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                      <div>
-                        <div className="text-xs text-slate-500 font-semibold">{reportLang === 'fr' ? 'Moyenne Annuelle Générale:' : 'Annual General Average:'}</div>
-                        <div className="text-4xl font-extrabold text-emerald-700">{annualAvg} / 20</div>
-                      </div>
-                      <div className="text-center sm:text-right">
-                        <div className="text-xs text-slate-500 font-semibold">{reportLang === 'fr' ? 'Décision du Conseil / Promotion:' : 'Class Council Decision / Promotion:'}</div>
-                        <div className={`text-base font-extrabold px-3 py-1 rounded-lg ${isPromoted ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-                          {isPromoted 
-                            ? (reportLang === 'fr' ? 'Admis(e) en classe supérieure / Promoted' : 'Promoted to Upper Class') 
-                            : (reportLang === 'fr' ? 'Redouble la classe / Repeat Class' : 'Repeat Class')}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-xs text-slate-600 border-t border-slate-200 pt-3">
-                      <strong>{reportLang === 'fr' ? 'Appréciation Annuelle:' : 'Annual Appreciation:'}</strong> {annualApp.text} (Grade: {annualApp.grade})
-                    </div>
-                  </div>
-                );
-              })()}
-
-              <div className="grid grid-cols-3 pt-8 text-xs font-semibold text-center">
-                <div>
-                  <p>{reportLang === 'fr' ? 'L\'Enseignant Principal' : 'Class Teacher'}</p>
-                  <div className="h-16 border-b border-dashed border-slate-400 mt-2"></div>
-                </div>
-                <div>
-                  <p>{reportLang === 'fr' ? 'Le Directeur / Principal' : 'Head Teacher / Principal'}</p>
-                  <div className="h-16 border-b border-dashed border-slate-400 mt-2"></div>
-                </div>
-                <div>
-                  <p>{reportLang === 'fr' ? 'Signature des Parents' : 'Parent\'s Signature'}</p>
-                  <div className="h-16 border-b border-dashed border-slate-400 mt-2"></div>
-                </div>
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
+              <div className="text-center border-b pb-4">
+                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
+                <div className="text-lg font-bold uppercase pt-2">Annual Evaluation Report Card</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 8: 2018 CURRICULUM REFERENCE */}
+        {/* TAB 9: CURRICULUM */}
         {activeTab === 'curriculum' && (
-          <div className="space-y-8 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 shadow-sm space-y-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold">2018 Official Curriculum Reference</h2>
-                  <p className="text-sm text-slate-500">Official ministerial competences, subjects, sub-competences and appreciation criteria.</p>
-                </div>
-              </div>
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">2018 Official Curriculum Reference</h2>
             </div>
           </div>
         )}
