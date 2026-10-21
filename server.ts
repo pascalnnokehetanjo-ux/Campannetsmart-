@@ -11,11 +11,10 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: '50mb' }));
 
-// Initialize Gemini API if key is present
 const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-// API Route for OCR Marksheet Photo processing
+// API Route for OCR Marksheet Photo processing with confidence and review cells
 app.post('/api/ocr-marksheet', async (req, res) => {
   try {
     const { image, mimeType } = req.body;
@@ -29,7 +28,6 @@ app.post('/api/ocr-marksheet', async (req, res) => {
       });
     }
 
-    // Prepare image part for Gemini
     const imagePart = {
       inlineData: {
         data: image,
@@ -38,45 +36,50 @@ app.post('/api/ocr-marksheet', async (req, res) => {
     };
 
     const prompt = `You are an expert educational OCR engine for bilingual primary schools following the 2018 Official Curriculum (Cameroon / Bilingual Education).
-Analyze this marksheet photo and extract structured student scores for the 6 official competences and 10 subjects/sub-competences:
-- Competence 1: English (1A), French (1B), National Language (1C)
-- Competence 2: Mathematics (2A), Science & Technology (2B)
-- Competence 3: Social Values (3A), Citizenship Values (3B)
-- Competence 4: Vocational Studies (4A), Entrepreneurship/Initiative (4B)
-- Competence 5: ICT (5)
-- Competence 6: Physical & Sports (6A1 or 6A2), Artistic Activities (6B)
+Analyze this merged marksheet photo and extract structured student scores for the 6 official competences and 10 subjects/sub-competences:
+- 1A (Communicate in English, maxOral:5, maxWritten:10, maxPractical:3, maxAttitude:2)
+- 1B (Communicate in French, maxOral:5, maxWritten:10, maxPractical:3, maxAttitude:2)
+- 1C (Communicate in National Language, maxOral:6, maxWritten:8, maxPractical:4, maxAttitude:2)
+- 2A (Mathematics, maxOral:5, maxWritten:10, maxPractical:3, maxAttitude:2)
+- 2B (Science & Tech, maxOral:5, maxWritten:10, maxPractical:3, maxAttitude:2)
+- 3A (Social Values, maxOral:5, maxWritten:10, maxPractical:3, maxAttitude:2)
+- 3B (Citizenship Values, maxOral:5, maxWritten:10, maxPractical:3, maxAttitude:2)
+- 4A (Vocational Studies, maxOral:4, maxWritten:8, maxPractical:6, maxAttitude:2)
+- 4B (Autonomy & Initiative, maxOral:5, maxWritten:8, maxPractical:5, maxAttitude:2)
+- 5 (ICT, maxOral:5, maxWritten:10, maxPractical:3, maxAttitude:2)
+- 6A1 (Physical & Sports Non-challenged, maxOral:4, maxWritten:4, maxPractical:10, maxAttitude:2)
+- 6B (Artistic Activities, maxOral:4, maxWritten:6, maxPractical:8, maxAttitude:2)
 
-For each student found in the marksheet, return a JSON object with:
-- studentName (string)
-- studentId (string)
-- scores: an object mapping subject codes (e.g. "1A", "1B", "2A", "3A", "3B", "4A", "4B", "5", "6A1", "6B") to an object of evaluation types: { oral: number, written: number, practical: number, attitude: number }.
+For each student found in the marksheet, return a JSON object with studentName, studentId, confidence (0.0 to 1.0), and scores mapping each subject code to evaluation types (oral, written, practical, attitude). Each evaluation type must contain:
+- value (number)
+- max (number)
+- confidence (number 0.0 to 1.0)
+- rawOcrText (string)
+- status ("pending")
 
-Return ONLY valid JSON in the following format:
+Return ONLY valid JSON in this exact format:
 {
   "className": "Primary 5 Bilingual",
-  "term": "Term 1",
-  "month": "October",
+  "term": "Term 1 / Trimestre 1",
+  "month": "October / Octobre",
+  "batchId": "BATCH_${Date.now()}",
   "students": [
     {
-      "studentName": "Amina Bello",
-      "studentId": "ST001",
+      "studentId": "ST_OCR_1",
+      "studentName": "Amina Bello Njoya",
+      "confidence": 0.95,
       "scores": {
-        "1A": { "oral": 16, "written": 15, "practical": 17, "attitude": 18 },
-        "1B": { "oral": 14, "written": 13, "practical": 15, "attitude": 16 },
-        "2A": { "oral": 18, "written": 19, "practical": 17, "attitude": 18 },
-        "2B": { "oral": 15, "written": 14, "practical": 16, "attitude": 17 },
-        "3A": { "oral": 17, "written": 16, "practical": 18, "attitude": 19 },
-        "3B": { "oral": 16, "written": 15, "practical": 17, "attitude": 18 },
-        "4A": { "oral": 15, "written": 14, "practical": 16, "attitude": 17 },
-        "4B": { "oral": 16, "written": 15, "practical": 17, "attitude": 18 },
-        "5": { "oral": 18, "written": 17, "practical": 19, "attitude": 19 },
-        "6A1": { "oral": 17, "written": 16, "practical": 18, "attitude": 18 },
-        "6B": { "oral": 18, "written": 17, "practical": 19, "attitude": 19 }
+        "1A": {
+          "oral": { "value": 4, "max": 5, "confidence": 0.96, "rawOcrText": "4/5", "status": "pending" },
+          "written": { "value": 9, "max": 10, "confidence": 0.94, "rawOcrText": "9/10", "status": "pending" },
+          "practical": { "value": 2, "max": 3, "confidence": 0.92, "rawOcrText": "2/3", "status": "pending" },
+          "attitude": { "value": 2, "max": 2, "confidence": 0.99, "rawOcrText": "2/2", "status": "pending" }
+        }
       }
     }
   ]
 }
-If any score is missing, estimate a reasonable realistic sample score or 0. Ensure valid JSON output.`;
+Ensure valid JSON output without any markdown error.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -84,7 +87,6 @@ If any score is missing, estimate a reasonable realistic sample score or 0. Ensu
     });
 
     const text = response.text || '';
-    // Extract JSON from response if wrapped in markdown code blocks
     let jsonStr = text;
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (jsonMatch) {

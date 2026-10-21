@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  Language, ReportLanguage, Student, ClassConfig, EvaluationScores 
+  Language, ReportLanguage, Student, ClassConfig, EvaluationScores,
+  MarksheetBatch, ExtractedStudentRecord, CellReviewStatus
 } from './types';
 import { OFFICIAL_COMPETENCES_2018, DEFAULT_CLASS_CONFIG, INITIAL_STUDENTS } from './data/curriculum';
 import { 
@@ -9,21 +10,22 @@ import {
 } from './utils/calculator';
 import { 
   BookOpen, Calculator, FileText, Upload, Users, Award, Globe, Sun, Moon, 
-  CheckCircle2, ArrowRight, Printer, Sparkles, AlertCircle, HelpCircle, ShieldCheck
+  CheckCircle2, ArrowRight, Printer, Sparkles, AlertCircle, HelpCircle, ShieldCheck,
+  MoveUp, MoveDown, Trash2, Layers, Image as ImageIcon, Check, X, Edit3, Lock, Unlock, History, AlertTriangle
 } from 'lucide-react';
 
-// Translations for UI navigation & labels (English, French, Hausa)
 const UI_TEXT = {
   en: {
     appName: 'Campannetsmart',
     tagline: 'Official 2018 Curriculum Bilingual Marksheet OCR Calculation Engine & Report Card Generator',
     heroHeading: 'Empowering Bilingual Teachers with Deterministic Marksheet Intelligence',
-    heroSub: 'Eliminate manual math fatigue and evaluation errors. Campannetsmart instantly converts marksheet photos into official 2018 curriculum monthly, termly, and annual student report cards in separate English and French versions.',
-    ctaUpload: 'Upload Marksheet Photo',
+    heroSub: 'Upload multiple marksheet photo parts, rearrange and merge them, review OCR extractions with cell-by-cell validation, and lock batches for official report cards.',
+    ctaUpload: 'Multi-Part Marksheet Stitcher',
     ctaExplore: 'Explore Report Generator',
     tabs: {
       dashboard: 'Overview & Demo',
-      ocrEngine: 'Marksheet OCR Engine',
+      ocrEngine: 'Multi-Part Marksheet OCR & Merger',
+      ocrReview: 'OCR Review & Validation',
       roster: 'Roster & Marks',
       monthly: 'Monthly Reports',
       termly: 'Termly Reports',
@@ -45,12 +47,13 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Moteur de Calcul OCR de Notes Bilingue & Générateur de Bulletins (Programme Officiel 2018)',
     heroHeading: 'Révolutionnez l\'Évaluation Scolaire Bilingue avec une Précision Mathématique',
-    heroSub: 'Éliminez les erreurs de calcul manuel. Campannetsmart convertit instantanément les photos de notes en bulletins officiels mensuels, trimestriels et annuels en versions anglaise et française séparées.',
-    ctaUpload: 'Télécharger Photo de Note',
+    heroSub: 'Téléchargez plusieurs parties de notes, fusionnez-les, révisez les extractions OCR avec validation cellule par cellule et verrouillez les lots pour les bulletins.',
+    ctaUpload: 'Fusionneur de Notes Multi-Parties',
     ctaExplore: 'Explorer les Bulletins',
     tabs: {
       dashboard: 'Accueil & Démo',
-      ocrEngine: 'Moteur OCR Notes',
+      ocrEngine: 'Fusion & OCR Notes',
+      ocrReview: 'Révision OCR & Validation',
       roster: 'Élèves & Notes',
       monthly: 'Bulletins Mensuels',
       termly: 'Bulletins Trimestriels',
@@ -72,12 +75,13 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Injin Lissafin Takardun Sakamako da Kera Rahoton Dalibai ta Harsunan Biyu',
     heroHeading: 'Karfin Koyo da Lissafi Na Musamman Ga Malamai da Makarantu',
-    heroSub: 'Cire wahalar lissafin hannu. Campannetsmart yana canza hotunan takardun sakamako zuwa rahotannin watanni, zangon karatu, da shekara a cikin Ingilishi da Faransanci daban-daban.',
-    ctaUpload: 'Sanya Hoton Sakamako',
+    heroSub: 'Sanya sassa daban-daban na hotunan sakamako, haɗa su, duba da tabbatar da kowace lamba kafin amincewa da rahoton aji.',
+    ctaUpload: 'Haɗa da Kera Sakamako',
     ctaExplore: 'Bincika Kera Rahoto',
     tabs: {
       dashboard: 'Bita & Gwaji',
-      ocrEngine: 'Injin OCR',
+      ocrEngine: 'Haɗa & OCR Sakamako',
+      ocrReview: 'Bita da Tabbatarwa',
       roster: 'Dalibai da Maki',
       monthly: 'Rahoton Wata',
       termly: 'Rahoton Zango',
@@ -97,6 +101,12 @@ const UI_TEXT = {
   }
 };
 
+interface MarksheetPart {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
+
 export default function App() {
   const [lang, setLang] = useState<Language>('en');
   const [darkMode, setDarkMode] = useState<boolean>(false);
@@ -105,16 +115,22 @@ export default function App() {
   const [classConfig, setClassConfig] = useState<ClassConfig>(DEFAULT_CLASS_CONFIG);
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
 
-  // Selected states for report cards and roster editor
   const [selectedStudentId, setSelectedStudentId] = useState<string>(INITIAL_STUDENTS[0].id);
   const [selectedTerm, setSelectedTerm] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].termName);
   const [selectedMonth, setSelectedMonth] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].months[0]);
   const [reportLang, setReportLang] = useState<ReportLanguage>('en');
 
-  // OCR state
+  // Multi-part marksheet state
+  const [marksheetParts, setMarksheetParts] = useState<MarksheetPart[]>([]);
   const [isProcessingOcr, setIsProcessingOcr] = useState<boolean>(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [ocrSuccessMsg, setOcrSuccessMsg] = useState<string | null>(null);
+  const [mergedPreviewUrl, setMergedPreviewUrl] = useState<string | null>(null);
+
+  // Active OCR Review Batch State
+  const [activeBatch, setActiveBatch] = useState<MarksheetBatch | null>(null);
+  const [unlockModalOpen, setUnlockModalOpen] = useState<boolean>(false);
+  const [unlockReason, setUnlockReason] = useState<string>('');
 
   const t = UI_TEXT[lang];
 
@@ -127,55 +143,259 @@ export default function App() {
     }
   };
 
-  const handleFileUploadForOcr = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleAddMarksheetParts = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newParts: MarksheetPart[] = Array.from(files).map((file, idx) => ({
+      id: `part_${Date.now()}_${idx}`,
+      file,
+      previewUrl: URL.createObjectURL(file)
+    }));
+
+    setMarksheetParts(prev => [...prev, ...newParts]);
+    setMergedPreviewUrl(null);
+  };
+
+  const movePartIndex = (index: number, direction: 'up' | 'down') => {
+    const newParts = [...marksheetParts];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newParts.length) return;
+    const temp = newParts[index];
+    newParts[index] = newParts[targetIndex];
+    newParts[targetIndex] = temp;
+    setMarksheetParts(newParts);
+    setMergedPreviewUrl(null);
+  };
+
+  const removePart = (id: string) => {
+    setMarksheetParts(prev => prev.filter(p => p.id !== id));
+    setMergedPreviewUrl(null);
+  };
+
+  const mergeAndExtractMarksheet = async () => {
+    if (marksheetParts.length === 0) {
+      setOcrError('Please upload at least one marksheet photo part.');
+      return;
+    }
 
     setIsProcessingOcr(true);
     setOcrError(null);
     setOcrSuccessMsg(null);
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const base64String = (reader.result as string).split(',')[1];
-        const res = await fetch('/api/ocr-marksheet', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: base64String, mimeType: file.type })
+    try {
+      const loadedImages = await Promise.all(marksheetParts.map(part => {
+        return new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = part.previewUrl;
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'OCR processing failed');
+      }));
 
-        if (data.success && data.data && data.data.students) {
-          // Merge or add parsed students
-          const newStudents: Student[] = data.data.students.map((parsed: any, idx: number) => ({
-            id: parsed.studentId || `EXT_${Date.now()}_${idx}`,
-            name: parsed.studentName || `Student ${idx + 1}`,
+      const maxWidth = Math.max(...loadedImages.map(img => img.naturalWidth || img.width));
+      const totalHeight = loadedImages.reduce((sum, img) => sum + (img.naturalHeight || img.height), 0);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = maxWidth;
+      canvas.height = totalHeight;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) throw new Error('Could not initialize canvas context for merging.');
+
+      let currentY = 0;
+      for (const img of loadedImages) {
+        ctx.drawImage(img, 0, currentY);
+        currentY += (img.naturalHeight || img.height);
+      }
+
+      const mergedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      setMergedPreviewUrl(mergedDataUrl);
+
+      const base64String = mergedDataUrl.split(',')[1];
+
+      const res = await fetch('/api/ocr-marksheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64String, mimeType: 'image/jpeg' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'OCR extraction failed');
+
+      if (data.success && data.data && data.data.students) {
+        // Initialize batch with review items
+        const batch: MarksheetBatch = {
+          batchId: data.data.batchId || `BATCH_${Date.now()}`,
+          timestamp: new Date().toLocaleString(),
+          mergedImageUrl: mergedDataUrl,
+          term: selectedTerm,
+          month: selectedMonth,
+          isLocked: false,
+          students: data.data.students.map((st: any) => ({
+            id: st.studentId,
+            name: st.studentName,
             gender: 'M',
             dob: '01/01/2015',
+            confidence: st.confidence || 0.92,
+            scores: st.scores
+          }))
+        };
+
+        setActiveBatch(batch);
+        setOcrSuccessMsg(`Successfully stitched ${marksheetParts.length} parts and extracted OCR scores. Please review and validate cells below.`);
+        setActiveTab('ocrReview');
+      }
+    } catch (err: any) {
+      setOcrError(err.message || 'Failed to merge and process marksheet photos');
+    } finally {
+      setIsProcessingOcr(false);
+    }
+  };
+
+  const updateCellStatus = (studentId: string, subjectCode: string, evalType: 'oral' | 'written' | 'practical' | 'attitude', status: CellReviewStatus, newVal?: number) => {
+    if (!activeBatch || activeBatch.isLocked) return;
+
+    setActiveBatch(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        students: prev.students.map(st => {
+          if (st.id !== studentId) return st;
+          const cell = st.scores[subjectCode]?.[evalType];
+          if (!cell) return st;
+
+          const previousVal = cell.value;
+          const finalVal = newVal !== undefined ? newVal : cell.value;
+
+          const updatedCell = {
+            ...cell,
+            value: finalVal,
+            status,
+            previousValue: previousVal !== finalVal ? previousVal : cell.previousValue,
+            correctedBy: status === 'corrected' ? classConfig.teacherName : cell.correctedBy,
+            auditTrail: [
+              ...cell.auditTrail,
+              {
+                timestamp: new Date().toLocaleTimeString(),
+                action: status === 'accepted' ? 'accepted' : status === 'corrected' ? 'corrected' : 'rejected',
+                teacher: classConfig.teacherName,
+                details: `Mark set to ${finalVal}/${cell.max} (Status: ${status})${previousVal !== finalVal ? ` [Changed from ${previousVal}]` : ''}`
+              }
+            ]
+          };
+
+          return {
+            ...st,
             scores: {
-              [selectedTerm]: {
-                [selectedMonth]: parsed.scores || {}
+              ...st.scores,
+              [subjectCode]: {
+                ...st.scores[subjectCode],
+                [evalType]: updatedCell
               }
             }
-          }));
+          };
+        })
+      };
+    });
+  };
 
-          setStudents(prev => [...prev, ...newStudents]);
-          setOcrSuccessMsg(`Successfully extracted ${newStudents.length} student marksheet records via AI OCR! Deterministic calculations updated.`);
-          setActiveTab('roster');
-        }
-      } catch (err: any) {
-        setOcrError(err.message || 'Failed to parse marksheet image');
-      } finally {
-        setIsProcessingOcr(false);
+  const confirmAndTransferMarks = () => {
+    if (!activeBatch) return;
+
+    // 1. Validate that no cells are pending or rejected without review
+    let hasUnresolved = false;
+    activeBatch.students.forEach(st => {
+      Object.keys(st.scores).forEach(subCode => {
+        const subCells = st.scores[subCode];
+        (['oral', 'written', 'practical', 'attitude'] as const).forEach(et => {
+          const cell = subCells[et];
+          if (cell && (cell.status === 'pending' || cell.status === 'rejected')) {
+            hasUnresolved = true;
+          }
+        });
+      });
+    });
+
+    if (hasUnresolved) {
+      alert('Please accept or correct all extracted cells before confirming and transferring marks.');
+      return;
+    }
+
+    // 2. Transfer only accepted or corrected marks into official student store
+    setStudents(prev => prev.map(existingStudent => {
+      const matchedExtracted = activeBatch.students.find(es => es.id === existingStudent.id);
+      if (!matchedExtracted) return existingStudent;
+
+      const studentScores = JSON.parse(JSON.stringify(existingStudent.scores));
+      if (!studentScores[activeBatch.term]) studentScores[activeBatch.term] = {};
+      if (!studentScores[activeBatch.term][activeBatch.month]) studentScores[activeBatch.term][activeBatch.month] = {};
+
+      Object.keys(matchedExtracted.scores).forEach(subCode => {
+        const cells = matchedExtracted.scores[subCode];
+        studentScores[activeBatch.term][activeBatch.month][subCode] = {
+          oral: cells.oral.status === 'accepted' || cells.oral.status === 'corrected' ? cells.oral.value : 0,
+          written: cells.written.status === 'accepted' || cells.written.status === 'corrected' ? cells.written.value : 0,
+          practical: cells.practical.status === 'accepted' || cells.practical.status === 'corrected' ? cells.practical.value : 0,
+          attitude: cells.attitude.status === 'accepted' || cells.attitude.status === 'corrected' ? cells.attitude.value : 0
+        };
+      });
+
+      return {
+        ...existingStudent,
+        scores: studentScores
+      };
+    }));
+
+    // If new student not in roster, add them
+    activeBatch.students.forEach(extSt => {
+      if (!students.some(s => s.id === extSt.id)) {
+        const newStudentScores: any = {
+          [activeBatch.term]: {
+            [activeBatch.month]: {}
+          }
+        };
+        Object.keys(extSt.scores).forEach(subCode => {
+          const cells = extSt.scores[subCode];
+          newStudentScores[activeBatch.term][activeBatch.month][subCode] = {
+            oral: cells.oral.value,
+            written: cells.written.value,
+            practical: cells.practical.value,
+            attitude: cells.attitude.value
+          };
+        });
+
+        setStudents(prev => [
+          ...prev,
+          {
+            id: extSt.id,
+            name: extSt.name,
+            gender: extSt.gender,
+            dob: extSt.dob,
+            scores: newStudentScores
+          }
+        ]);
       }
-    };
-    reader.onerror = () => {
-      setOcrError('Failed to read image file');
-      setIsProcessingOcr(false);
-    };
-    reader.readAsDataURL(file);
+    });
+
+    // 3. Lock batch
+    setActiveBatch(prev => prev ? { ...prev, isLocked: true, lockedAt: new Date().toLocaleString() } : null);
+    alert('Marks successfully validated, locked, and transferred to official monthly report cards with full audit trail preserved.');
+    setActiveTab('monthly');
+  };
+
+  const unlockBatchWithReason = () => {
+    if (!activeBatch || !unlockReason.trim()) {
+      alert('Please provide a valid reason for unlocking this batch.');
+      return;
+    }
+    setActiveBatch(prev => prev ? {
+      ...prev,
+      isLocked: false,
+      unlockedBy: classConfig.teacherName,
+      unlockReason: unlockReason.trim()
+    } : null);
+    setUnlockReason('');
+    setUnlockModalOpen(false);
   };
 
   const updateScore = (studentId: string, term: string, month: string, subjectCode: string, field: keyof EvaluationScores, value: number) => {
@@ -196,7 +416,6 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-950'}`}>
-      {/* Top Header */}
       <header className="sticky top-0 z-50 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-xs no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -208,13 +427,12 @@ export default function App() {
                 {t.appName}
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-medium">
-                2018 Curriculum Engine
+                OCR Verification & Locking Engine
               </span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Language Selector */}
             <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
               <Globe className="w-4 h-4 text-slate-500 ml-1" />
               {(['en', 'fr', 'ha'] as Language[]).map(l => (
@@ -230,7 +448,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
@@ -241,11 +458,11 @@ export default function App() {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto space-x-1 py-2 border-t border-slate-100 dark:border-slate-700/50">
           {[
             { id: 'dashboard', label: t.tabs.dashboard, icon: BookOpen },
-            { id: 'ocrEngine', label: t.tabs.ocrEngine, icon: Upload },
+            { id: 'ocrEngine', label: t.tabs.ocrEngine, icon: Layers },
+            { id: 'ocrReview', label: t.tabs.ocrReview, icon: CheckCircle2 },
             { id: 'roster', label: t.tabs.roster, icon: Users },
             { id: 'monthly', label: t.tabs.monthly, icon: FileText },
             { id: 'termly', label: t.tabs.termly, icon: Calculator },
@@ -266,23 +483,24 @@ export default function App() {
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
+                {tab.id === 'ocrReview' && activeBatch && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                )}
               </button>
             );
           })}
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* TAB 1: DASHBOARD & OVERVIEW */}
         {activeTab === 'dashboard' && (
           <div className="space-y-16">
-            {/* Hero Section (2-column design, powerful heading, paragraph, image demo, CTA button) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
                 <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Official 2018 Bilingual Curriculum Standard</span>
+                  <span>OCR Verification & Mark-Locking Workflow</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
                   {t.heroHeading}
@@ -295,7 +513,7 @@ export default function App() {
                     onClick={() => setActiveTab('ocrEngine')}
                     className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5"
                   >
-                    <Upload className="w-5 h-5" />
+                    <Layers className="w-5 h-5" />
                     <span>{t.ctaUpload}</span>
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </button>
@@ -310,168 +528,66 @@ export default function App() {
                 <div className="flex items-center space-x-6 text-sm text-slate-500 dark:text-slate-400 pt-4 border-t border-slate-200 dark:border-slate-800">
                   <div className="flex items-center space-x-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Strictly Deterministic Math</span>
+                    <span>Cell-by-Cell Verification</span>
                   </div>
                   <div className="flex items-center space-x-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Bilingual (En / Fr)</span>
+                    <span>Batch Locking & Audit Trail</span>
                   </div>
                 </div>
               </div>
 
-              {/* Right Hero Graphic Card */}
               <div className="custom-card rounded-2xl p-6 shadow-xl relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
                 <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-48 h-48 bg-emerald-500/15 rounded-full blur-2xl"></div>
                 <div className="relative z-10 space-y-6">
                   <div className="flex items-center justify-between border-b border-slate-700 pb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center font-bold text-slate-950">
-                        C1
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-950">
+                        V
                       </div>
-                      <span className="font-bold text-sm">Competence Engine Active</span>
+                      <span className="font-bold text-sm">Verification Engine Active</span>
                     </div>
                     <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-mono">
-                      v2.4 Ready
+                      v2.6 Secured
                     </span>
                   </div>
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">Total Competences Evaluated</div>
-                        <div className="text-lg font-bold text-emerald-400">6 Core Competences</div>
+                        <div className="text-xs text-slate-400">OCR Review Queue</div>
+                        <div className="text-lg font-bold text-emerald-400">{activeBatch ? `${activeBatch.students.length} Students Pending` : 'No Active Batch'}</div>
                       </div>
-                      <Award className="w-8 h-8 text-emerald-400" />
+                      <CheckCircle2 className="w-8 h-8 text-emerald-400" />
                     </div>
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">Subjects & Sub-Competences</div>
-                        <div className="text-lg font-bold text-amber-400">10 Subjects (Oral, Written, Practical, Attitude)</div>
+                        <div className="text-xs text-slate-400">Batch Locking Status</div>
+                        <div className="text-lg font-bold text-amber-400">{activeBatch?.isLocked ? 'Locked & Secured' : 'Editable / Unlocked'}</div>
                       </div>
-                      <BookOpen className="w-8 h-8 text-amber-400" />
-                    </div>
-                    <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
-                      <div>
-                        <div className="text-xs text-slate-400">Appreciation Scale & Grading</div>
-                        <div className="text-sm font-semibold text-slate-200">CNA (C) to Expert / A+</div>
-                      </div>
-                      <Calculator className="w-8 h-8 text-blue-400" />
+                      {activeBatch?.isLocked ? <Lock className="w-8 h-8 text-amber-400" /> : <Unlock className="w-8 h-8 text-blue-400" />}
                     </div>
                   </div>
                   <div className="pt-2 flex justify-between text-xs text-slate-400">
-                    <span>Sample Roster Loaded: 2 Students</span>
-                    <span className="text-emerald-400 font-medium">Ready for Print</span>
+                    <span>Audit Trail Preserved</span>
+                    <span className="text-emerald-400 font-medium">100% Deterministic</span>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Features & Benefits Section */}
-            <div className="space-y-12 pt-12 border-t border-slate-200 dark:border-slate-800">
-              <div className="text-center max-w-3xl mx-auto space-y-4">
-                <h2 className="text-3xl font-bold tracking-tight">{t.featuresTitle}</h2>
-                <p className="text-slate-600 dark:text-slate-400">{t.featuresSub}</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[
-                  {
-                    icon: Upload,
-                    title: 'Marksheet OCR Photo Recognition',
-                    desc: 'Upload hand-written or printed teacher marksheets. Gemini multimodal AI accurately extracts student scores into structured grades without altering calculations.'
-                  },
-                  {
-                    icon: Calculator,
-                    title: 'Deterministic Calculation Engine',
-                    desc: 'Monthly sums, termly vertical/horizontal totals, and annual averages are computed using exact ministerial formulas. Zero AI hallucinations in math.'
-                  },
-                  {
-                    icon: FileText,
-                    title: 'Separate Bilingual Report Cards',
-                    desc: 'Instant generation of Monthly, Termly, and Annual student report cards in dedicated English and French versions adhering to official 2018 terminology.'
-                  }
-                ].map((feat, idx) => {
-                  const Icon = feat.icon;
-                  return (
-                    <div key={idx} className="custom-card rounded-2xl p-6 shadow-sm space-y-4 hover:shadow-md transition-shadow">
-                      <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                        <Icon className="w-6 h-6" />
-                      </div>
-                      <h3 className="text-xl font-bold">{feat.title}</h3>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{feat.desc}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Pricing Section */}
-            <div className="space-y-12 pt-12 border-t border-slate-200 dark:border-slate-800">
-              <div className="text-center max-w-3xl mx-auto space-y-4">
-                <h2 className="text-3xl font-bold tracking-tight">{t.pricingTitle}</h2>
-                <p className="text-slate-600 dark:text-slate-400">{t.pricingSub}</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <div className="custom-card rounded-2xl p-8 shadow-sm space-y-6 flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <span className="text-xs px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 font-semibold text-slate-700 dark:text-slate-300">
-                      Free Teacher Demo
-                    </span>
-                    <h3 className="text-3xl font-extrabold">$0 <span className="text-sm font-normal text-slate-500">/ forever</span></h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Perfect for individual teachers testing the bilingual OCR calculation engine.</p>
-                    <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                      <li className="flex items-center space-x-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span>Up to 30 student rosters</span></li>
-                      <li className="flex items-center space-x-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span>Monthly & Termly Report Cards</span></li>
-                      <li className="flex items-center space-x-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span>Bilingual English & French</span></li>
-                    </ul>
-                  </div>
-                  <button 
-                    onClick={() => setActiveTab('ocrEngine')}
-                    className="w-full py-3 rounded-xl border border-slate-300 dark:border-slate-600 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    Start Free Demo
-                  </button>
-                </div>
-
-                <div className="custom-card rounded-2xl p-8 shadow-xl space-y-6 flex flex-col justify-between border-emerald-500 dark:border-emerald-500 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-emerald-600 text-white text-xs font-bold px-4 py-1 rounded-bl-xl">
-                    POPULAR
-                  </div>
-                  <div className="space-y-4">
-                    <span className="text-xs px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 font-semibold text-emerald-700 dark:text-emerald-300">
-                      School Enterprise
-                    </span>
-                    <h3 className="text-3xl font-extrabold">$49 <span className="text-sm font-normal text-slate-500">/ term per school</span></h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">For bilingual primary and secondary schools needing cloud storage and multi-teacher access.</p>
-                    <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                      <li className="flex items-center space-x-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span>Unlimited student rosters & classes</span></li>
-                      <li className="flex items-center space-x-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span>Annual report cards & archive</span></li>
-                      <li className="flex items-center space-x-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /><span>Priority AI Marksheet OCR processing</span></li>
-                    </ul>
-                  </div>
-                  <button 
-                    onClick={() => setActiveTab('ocrEngine')}
-                    className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md transition-colors"
-                  >
-                    Upgrade School Account
-                  </button>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 2: OCR MARKSHEET PHOTO ENGINE */}
+        {/* TAB 2: MULTI-PART MARKSHEET OCR & MERGER */}
         {activeTab === 'ocrEngine' && (
           <div className="space-y-8 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 shadow-sm space-y-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
-                  <Upload className="w-6 h-6" />
+                  <Layers className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">Marksheet Photo OCR Engine</h2>
-                  <p className="text-sm text-slate-500">Upload hand-written or printed teacher marksheets for instant AI extraction into structured scores.</p>
+                  <h2 className="text-2xl font-bold">Multi-Part Marksheet Photo Merger & OCR</h2>
+                  <p className="text-sm text-slate-500">Upload multiple photos of the same marksheet, rearrange them, merge them, and send to OCR review queue.</p>
                 </div>
               </div>
 
@@ -489,42 +605,357 @@ export default function App() {
                 </div>
               )}
 
-              <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-12 text-center space-y-4 hover:border-emerald-500 transition-colors">
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-500">
-                  <Upload className="w-8 h-8 text-emerald-600" />
+              <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4 hover:border-emerald-500 transition-colors">
+                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-500">
+                  <Upload className="w-7 h-7 text-emerald-600" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-lg">Drop your marksheet photo here, or browse</h3>
-                  <p className="text-xs text-slate-500">Supports PNG, JPG, WEBP up to 50MB</p>
+                  <h3 className="font-semibold text-base">Upload Marksheet Photo Parts</h3>
+                  <p className="text-xs text-slate-500">Select one or multiple photos (e.g., Part 1 and Part 2 of the same marksheet)</p>
                 </div>
                 <div>
-                  <label className="inline-block cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all">
-                    <span>{isProcessingOcr ? 'Processing OCR...' : 'Select Marksheet Image'}</span>
+                  <label className="inline-block cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all text-sm">
+                    <span>Select Photo Parts</span>
                     <input 
                       type="file" 
                       accept="image/*" 
+                      multiple
                       className="hidden" 
-                      onChange={handleFileUploadForOcr}
-                      disabled={isProcessingOcr}
+                      onChange={handleAddMarksheetParts}
                     />
                   </label>
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-2 text-xs text-slate-600 dark:text-slate-400">
-                <div className="font-semibold flex items-center space-x-1.5 text-slate-700 dark:text-slate-300">
-                  <HelpCircle className="w-4 h-4 text-amber-500" />
-                  <span>How Campannetsmart OCR Works:</span>
+              {marksheetParts.length > 0 && (
+                <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-base flex items-center space-x-2">
+                      <ImageIcon className="w-5 h-5 text-emerald-600" />
+                      <span>Uploaded Parts ({marksheetParts.length}) — Rearrange Order</span>
+                    </h3>
+                    <button
+                      onClick={() => { setMarksheetParts([]); setMergedPreviewUrl(null); }}
+                      className="text-xs text-red-600 hover:underline font-semibold"
+                    >
+                      Clear All Parts
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {marksheetParts.map((part, index) => (
+                      <div key={part.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center space-x-4">
+                          <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">
+                            {index + 1}
+                          </span>
+                          <img src={part.previewUrl} alt={`Part ${index + 1}`} className="w-14 h-14 object-cover rounded-lg border border-slate-300 dark:border-slate-600" />
+                          <div>
+                            <div className="text-sm font-semibold truncate max-w-xs">{part.file.name}</div>
+                            <div className="text-xs text-slate-400">{(part.file.size / 1024).toFixed(1)} KB</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => movePartIndex(index, 'up')}
+                            disabled={index === 0}
+                            className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100 transition-colors"
+                            title="Move Up"
+                          >
+                            <MoveUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => movePartIndex(index, 'down')}
+                            disabled={index === marksheetParts.length - 1}
+                            className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 disabled:opacity-30 hover:bg-slate-100 transition-colors"
+                            title="Move Down"
+                          >
+                            <MoveDown className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => removePart(part.id)}
+                            className="p-2 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 hover:bg-red-100 transition-colors"
+                            title="Remove"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 flex justify-end">
+                    <button
+                      onClick={mergeAndExtractMarksheet}
+                      disabled={isProcessingOcr || marksheetParts.length === 0}
+                      className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-emerald-600/25 disabled:opacity-50 transition-all"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      <span>{isProcessingOcr ? 'Stitching & Extracting OCR...' : 'Merge & Send to OCR Review'}</span>
+                    </button>
+                  </div>
                 </div>
-                <p>1. The OCR engine scans student names, subject scores (Oral, Written, Practical, Attitude).</p>
-                <p>2. Data is securely ingested into your active class roster.</p>
-                <p>3. <strong>Strict rule:</strong> AI never computes averages or grades. All mathematical calculations are 100% deterministic in code.</p>
-              </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* TAB 3: ROSTER & MARKS MANAGER */}
+        {/* TAB 3: OCR REVIEW & VALIDATION */}
+        {activeTab === 'ocrReview' && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold flex items-center space-x-2">
+                  <span>OCR Review & Cell-by-Cell Validation</span>
+                  {activeBatch?.isLocked && (
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center space-x-1">
+                      <Lock className="w-3 h-3" />
+                      <span>Batch Locked</span>
+                    </span>
+                  )}
+                </h2>
+                <p className="text-sm text-slate-500">Review AI extracted scores, verify against confidence and max marks, and explicitly accept or correct every cell.</p>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                {activeBatch?.isLocked ? (
+                  <button
+                    onClick={() => setUnlockModalOpen(true)}
+                    className="flex items-center space-x-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-md transition-all"
+                  >
+                    <Unlock className="w-4 h-4" />
+                    <span>Unlock Batch</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={confirmAndTransferMarks}
+                    disabled={!activeBatch}
+                    className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-emerald-600/20 disabled:opacity-50 transition-all"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Confirm and Transfer Marks</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {!activeBatch ? (
+              <div className="custom-card rounded-2xl p-12 text-center space-y-4">
+                <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
+                <h3 className="text-lg font-bold">No Active OCR Batch in Review</h3>
+                <p className="text-sm text-slate-500">Please upload and merge marksheet photo parts in the OCR Engine tab first.</p>
+                <button
+                  onClick={() => setActiveTab('ocrEngine')}
+                  className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm shadow"
+                >
+                  Go to OCR Engine
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {/* Batch Info Card */}
+                <div className="custom-card rounded-2xl p-6 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="text-xs text-slate-400">Batch ID</div>
+                    <div className="font-bold font-mono text-emerald-600">{activeBatch.batchId}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400">Extraction Timestamp</div>
+                    <div className="font-semibold">{activeBatch.timestamp}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400">Term & Month</div>
+                    <div className="font-semibold">{activeBatch.term} / {activeBatch.month}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400">Batch Status</div>
+                    <div className="font-bold flex items-center space-x-1.5">
+                      {activeBatch.isLocked ? (
+                        <span className="text-amber-600 flex items-center"><Lock className="w-4 h-4 mr-1" /> Locked</span>
+                      ) : (
+                        <span className="text-emerald-600 flex items-center"><CheckCircle2 className="w-4 h-4 mr-1" /> Ready for Verification</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Merged Marksheet Reference Image */}
+                <div className="custom-card rounded-2xl p-6 space-y-4">
+                  <h3 className="font-bold text-base flex items-center space-x-2">
+                    <ImageIcon className="w-5 h-5 text-emerald-600" />
+                    <span>Merged Marksheet Source Image</span>
+                  </h3>
+                  <div className="border border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden max-h-72 bg-slate-900 flex justify-center">
+                    <img src={activeBatch.mergedImageUrl} alt="Merged Marksheet Source" className="object-contain max-h-72" />
+                  </div>
+                </div>
+
+                {/* Review Table per Student */}
+                <div className="space-y-6">
+                  {activeBatch.students.map((st, stIdx) => (
+                    <div key={st.id} className="custom-card rounded-2xl p-6 shadow-sm space-y-4">
+                      <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4">
+                        <div className="flex items-center space-x-3">
+                          <span className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center">
+                            {stIdx + 1}
+                          </span>
+                          <div>
+                            <h3 className="font-bold text-lg">{st.name} <span className="text-xs font-mono text-slate-400">({st.id})</span></h3>
+                            <div className="text-xs text-slate-500">OCR Confidence: <span className="font-bold text-emerald-600">{(st.confidence * 100).toFixed(1)}%</span></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Subjects & Cells Review */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs border border-slate-200 dark:border-slate-700">
+                          <thead>
+                            <tr className="bg-slate-100 dark:bg-slate-800 font-bold border-b border-slate-200 dark:border-slate-700">
+                              <th className="p-3">Subject / Sub-Competence</th>
+                              <th className="p-3 text-center">Oral (Max)</th>
+                              <th className="p-3 text-center">Written (Max)</th>
+                              <th className="p-3 text-center">Practical (Max)</th>
+                              <th className="p-3 text-center">Attitude (Max)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                            {OFFICIAL_COMPETENCES_2018.map(comp => (
+                              <React.Fragment key={comp.id}>
+                                <tr className="bg-slate-50 dark:bg-slate-800/40">
+                                  <td colSpan={5} className="p-2.5 font-bold text-[11px] uppercase text-emerald-700 dark:text-emerald-300">
+                                    {lang === 'fr' ? comp.titleFr : comp.titleEn}
+                                  </td>
+                                </tr>
+                                {comp.subjects.map(sub => {
+                                  const cellData = st.scores[sub.code] || {
+                                    oral: { value: 0, max: sub.maxOral, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] },
+                                    written: { value: 0, max: sub.maxWritten, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] },
+                                    practical: { value: 0, max: sub.maxPractical, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] },
+                                    attitude: { value: 0, max: sub.maxAttitude, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] }
+                                  };
+
+                                  return (
+                                    <tr key={sub.code} className="hover:bg-slate-50/50">
+                                      <td className="p-3 font-medium">
+                                        <div>{lang === 'fr' ? sub.nameFr : sub.nameEn}</div>
+                                        <div className="text-[10px] text-slate-400">Code: {sub.code}</div>
+                                      </td>
+                                      {(['oral', 'written', 'practical', 'attitude'] as const).map(et => {
+                                        const cell = cellData[et] || { value: 0, max: 10, confidence: 0.9, rawOcrText: '0', status: 'pending', auditTrail: [] };
+                                        const isError = cell.value > cell.max || cell.value < 0 || isNaN(cell.value);
+
+                                        return (
+                                          <td key={et} className="p-3 text-center">
+                                            <div className="space-y-1.5 flex flex-col items-center">
+                                              <div className="flex items-center space-x-1">
+                                                <input
+                                                  type="number"
+                                                  min={0}
+                                                  max={cell.max}
+                                                  disabled={activeBatch.isLocked}
+                                                  value={cell.value}
+                                                  onChange={e => updateCellStatus(st.id, sub.code, et, 'corrected', parseFloat(e.target.value) || 0)}
+                                                  className={`w-16 text-center rounded-lg py-1 text-xs font-bold border ${
+                                                    isError ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
+                                                  }`}
+                                                />
+                                                <span className="text-[10px] text-slate-400">/ {cell.max}</span>
+                                              </div>
+
+                                              <div className="text-[10px] text-slate-500 flex items-center space-x-1">
+                                                <span>Raw: <strong className="font-mono">{cell.rawOcrText}</strong></span>
+                                                <span>({(cell.confidence * 100).toFixed(0)}%)</span>
+                                              </div>
+
+                                              {/* Accept / Correct / Reject Controls */}
+                                              {!activeBatch.isLocked && (
+                                                <div className="flex items-center space-x-1 pt-1">
+                                                  <button
+                                                    onClick={() => updateCellStatus(st.id, sub.code, et, 'accepted')}
+                                                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
+                                                      cell.status === 'accepted' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 hover:bg-emerald-100'
+                                                    }`}
+                                                    title="Accept OCR Mark"
+                                                  >
+                                                    Accept
+                                                  </button>
+                                                  <button
+                                                    onClick={() => updateCellStatus(st.id, sub.code, et, 'corrected')}
+                                                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
+                                                      cell.status === 'corrected' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 hover:bg-amber-100'
+                                                    }`}
+                                                    title="Mark Corrected"
+                                                  >
+                                                    Correct
+                                                  </button>
+                                                </div>
+                                              )}
+
+                                              {/* Status Badge */}
+                                              <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                                                cell.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' :
+                                                cell.status === 'corrected' ? 'bg-amber-100 text-amber-800' :
+                                                cell.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                'bg-slate-100 text-slate-600'
+                                              }`}>
+                                                {cell.status}
+                                              </span>
+                                            </div>
+                                          </td>
+                                        );
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </React.Fragment>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Unlock Modal */}
+            {unlockModalOpen && (
+              <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                <div className="custom-card rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl bg-white dark:bg-slate-800">
+                  <div className="flex items-center space-x-3 text-amber-600">
+                    <AlertTriangle className="w-6 h-6" />
+                    <h3 className="text-lg font-bold">Unlock Batch Authorization</h3>
+                  </div>
+                  <p className="text-xs text-slate-500">Unlocking this batch allows modifying locked official marks. Please provide a mandatory reason for audit logging.</p>
+                  <textarea
+                    value={unlockReason}
+                    onChange={e => setUnlockReason(e.target.value)}
+                    placeholder="Enter reason for unlocking (e.g. Correcting teacher transcription error in Math)..."
+                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm bg-slate-50 dark:bg-slate-900"
+                    rows={3}
+                  />
+                  <div className="flex justify-end space-x-3 pt-2">
+                    <button
+                      onClick={() => setUnlockModalOpen(false)}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 dark:bg-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={unlockBatchWithReason}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-600 text-white hover:bg-amber-700"
+                    >
+                      Authorize Unlock
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 4: ROSTER & MARKS MANAGER */}
         {activeTab === 'roster' && (
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -554,7 +985,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Student Tabs */}
             <div className="flex overflow-x-auto space-x-2 pb-2">
               {students.map(st => (
                 <button
@@ -571,7 +1001,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Marks Entry Table */}
             <div className="custom-card rounded-2xl shadow-sm overflow-hidden">
               <div className="p-6 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <div>
@@ -675,7 +1104,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: MONTHLY REPORT CARDS */}
+        {/* TAB 5: MONTHLY REPORT CARDS */}
         {activeTab === 'monthly' && (
           <div className="space-y-6">
             <div className="flex flex-wrap justify-between items-center gap-4 no-print">
@@ -734,9 +1163,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Official Monthly Report Card Printable View */}
             <div className="custom-card rounded-2xl p-8 shadow-xl max-w-4xl mx-auto space-y-6 report-page bg-white text-slate-900 border-2 border-slate-300">
-              {/* Header */}
               <div className="text-center border-b-2 border-slate-800 pb-4 space-y-1">
                 <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
                   REPUBLIC OF CAMEROON • REPUBLIQUE DU CAMEROUN
@@ -753,7 +1180,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Student Bio Info */}
               <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
                   <span className="font-bold">{reportLang === 'fr' ? 'Nom de l\'Élève / Student Name:' : 'Student Name:'}</span> {currentStudent.name}
@@ -769,7 +1195,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Scores Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs border border-slate-300">
                   <thead>
@@ -779,11 +1204,7 @@ export default function App() {
                       <th className="p-2 text-center border-r border-slate-300">Written / Écrit</th>
                       <th className="p-2 text-center border-r border-slate-300">Practical / Pratique</th>
                       <th className="p-2 text-center border-r border-slate-300">Attitude</th>
-                      <th className="p-2 text-center border-r border-slate-300">Total / {(() => {
-                        let maxAll = 0;
-                        OFFICIAL_COMPETENCES_2018.forEach(c => c.subjects.forEach(s => maxAll += getSubjectMaxTotal(s)));
-                        return maxAll;
-                      })()}</th>
+                      <th className="p-2 text-center border-r border-slate-300">Total / {getAllCompetencesMaxTotal()}</th>
                       <th className="p-2 text-center">{reportLang === 'fr' ? 'Appréciation / Note' : 'Appreciation / Grade'}</th>
                     </tr>
                   </thead>
@@ -823,7 +1244,6 @@ export default function App() {
                 </table>
               </div>
 
-              {/* Summary & Appreciation Box */}
               {(() => {
                 const monthScores = currentStudent.scores[selectedTerm]?.[selectedMonth] || {};
                 const monthlyAvg = calculateMonthlyAverage(monthScores);
@@ -842,7 +1262,6 @@ export default function App() {
                 );
               })()}
 
-              {/* Signatures */}
               <div className="grid grid-cols-2 pt-8 text-xs font-semibold text-center">
                 <div>
                   <p>{reportLang === 'fr' ? 'Signature de l\'Enseignant' : 'Teacher\'s Signature'}</p>
@@ -857,7 +1276,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: TERMLY REPORT CARDS */}
+        {/* TAB 6: TERMLY REPORT CARDS */}
         {activeTab === 'termly' && (
           <div className="space-y-6">
             <div className="flex flex-wrap justify-between items-center gap-4 no-print">
@@ -907,9 +1326,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Official Termly Report Card Printable View */}
             <div className="custom-card rounded-2xl p-8 shadow-xl max-w-4xl mx-auto space-y-6 report-page bg-white text-slate-900 border-2 border-slate-300">
-              {/* Header */}
               <div className="text-center border-b-2 border-slate-800 pb-4 space-y-1">
                 <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
                   REPUBLIC OF CAMEROON • REPUBLIQUE DU CAMEROUN
@@ -926,7 +1343,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Student Bio Info */}
               <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
                   <span className="font-bold">{reportLang === 'fr' ? 'Nom de l\'Élève:' : 'Student Name:'}</span> {currentStudent.name}
@@ -945,7 +1361,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Termly Horizontal & Vertical Totals Table */}
               <div className="overflow-x-auto">
                 {(() => {
                   const termInfo = classConfig.terms.find(t => t.termName === selectedTerm);
@@ -1009,7 +1424,6 @@ export default function App() {
                 })()}
               </div>
 
-              {/* Termly Average Summary */}
               {(() => {
                 const termInfo = classConfig.terms.find(t => t.termName === selectedTerm);
                 const termAvg = calculateTermAverage(currentStudent, selectedTerm, termInfo ? termInfo.months : []);
@@ -1028,7 +1442,6 @@ export default function App() {
                 );
               })()}
 
-              {/* Signatures */}
               <div className="grid grid-cols-2 pt-8 text-xs font-semibold text-center">
                 <div>
                   <p>{reportLang === 'fr' ? 'Signature du Maître' : 'Class Teacher\'s Signature'}</p>
@@ -1043,7 +1456,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 6: ANNUAL REPORT CARDS */}
+        {/* TAB 7: ANNUAL REPORT CARDS */}
         {activeTab === 'annual' && (
           <div className="space-y-6">
             <div className="flex flex-wrap justify-between items-center gap-4 no-print">
@@ -1084,9 +1497,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Official Annual Report Card Printable View */}
             <div className="custom-card rounded-2xl p-8 shadow-xl max-w-4xl mx-auto space-y-6 report-page bg-white text-slate-900 border-2 border-slate-300">
-              {/* Header */}
               <div className="text-center border-b-2 border-slate-800 pb-4 space-y-1">
                 <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
                   REPUBLIC OF CAMEROON • REPUBLIQUE DU CAMEROUN
@@ -1102,7 +1513,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Student Bio Info */}
               <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
                   <span className="font-bold">{reportLang === 'fr' ? 'Nom de l\'Élève:' : 'Student Name:'}</span> {currentStudent.name}
@@ -1121,7 +1531,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Annual Termly Summary Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs border border-slate-300">
                   <thead>
@@ -1157,7 +1566,6 @@ export default function App() {
                 </table>
               </div>
 
-              {/* Annual General Average & Promotion Decision */}
               {(() => {
                 const annualAvg = calculateAnnualAverage(currentStudent, classConfig.terms.map(t => t.termName), classConfig.terms);
                 const annualApp = getAppreciation(annualAvg, reportLang);
@@ -1185,7 +1593,6 @@ export default function App() {
                 );
               })()}
 
-              {/* Signatures */}
               <div className="grid grid-cols-3 pt-8 text-xs font-semibold text-center">
                 <div>
                   <p>{reportLang === 'fr' ? 'L\'Enseignant Principal' : 'Class Teacher'}</p>
@@ -1204,7 +1611,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 7: 2018 CURRICULUM REFERENCE */}
+        {/* TAB 8: 2018 CURRICULUM REFERENCE */}
         {activeTab === 'curriculum' && (
           <div className="space-y-8 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 shadow-sm space-y-6">
@@ -1218,7 +1625,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Appreciation Criteria Legend */}
               <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
                 <h3 className="font-bold text-base flex items-center space-x-2">
                   <Award className="w-5 h-5 text-emerald-600" />
@@ -1247,37 +1653,11 @@ export default function App() {
                   </div>
                 </div>
               </div>
-
-              {/* 6 Competences Glossary */}
-              <div className="space-y-4">
-                <h3 className="font-bold text-lg">Official 6 Competences & 10 Subjects</h3>
-                <div className="space-y-4">
-                  {OFFICIAL_COMPETENCES_2018.map(comp => (
-                    <div key={comp.id} className="custom-card rounded-xl p-5 space-y-3 border border-slate-200 dark:border-slate-700">
-                      <div className="font-bold text-emerald-700 dark:text-emerald-400 text-base">
-                        {lang === 'fr' ? comp.titleFr : comp.titleEn}
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        {comp.subjects.map(sub => (
-                          <div key={sub.code} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/80 text-xs space-y-1">
-                            <div className="font-semibold text-slate-900 dark:text-slate-100">{lang === 'fr' ? sub.nameFr : sub.nameEn}</div>
-                            <div className="text-slate-500 flex justify-between">
-                              <span>Code: {sub.code}</span>
-                              <span>Max: {getSubjectMaxTotal(sub)} marks (Oral:{sub.maxOral}, Written:{sub.maxWritten}, Practical:{sub.maxPractical}, Attitude:{sub.maxAttitude})</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         )}
       </main>
 
-      {/* Footer */}
       <footer className="mt-20 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/50 py-8 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-2">
           <p>{t.footerText}</p>
