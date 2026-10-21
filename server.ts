@@ -11,22 +11,52 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: '50mb' }));
 
+// Simple in-memory rate limiter store for production hardening
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 30;
+
+app.use('/api/', (req, res, next) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  let record = rateLimitStore.get(ip);
+
+  if (!record || now > record.resetTime) {
+    record = { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS };
+    rateLimitStore.set(ip, record);
+  } else {
+    record.count++;
+    if (record.count > MAX_REQUESTS_PER_WINDOW) {
+      console.warn(`[RATE_LIMIT_EXCEEDED] IP: ${ip} exceeded rate limit.`);
+      return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
+    }
+  }
+  next();
+});
+
 const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-// API Route for OCR Marksheet Photo processing with confidence and review cells
+// Secure Server-Side OCR Endpoint
 app.post('/api/ocr-marksheet', async (req, res) => {
+  const startTime = Date.now();
+  const requestId = `OCR_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  
   try {
     const { image, mimeType } = req.body;
     if (!image) {
+      console.warn(`[${requestId}] OCR Error: No image data provided`);
       return res.status(400).json({ error: 'No image data provided' });
     }
 
     if (!ai) {
+      console.error(`[${requestId}] OCR Error: Gemini API key not configured on server`);
       return res.status(500).json({ 
-        error: 'Gemini API key not configured. Please set GEMINI_API_KEY in secrets.' 
+        error: 'Gemini API key not configured on server. Please set GEMINI_API_KEY.' 
       });
     }
+
+    console.log(`[${requestId}] Starting OCR processing. MIME: ${mimeType || 'image/jpeg'}`);
 
     const imagePart = {
       inlineData: {
@@ -94,9 +124,10 @@ Ensure valid JSON output without any markdown error.`;
     }
 
     const parsedData = JSON.parse(jsonStr);
+    console.log(`[${requestId}] OCR Success in ${Date.now() - startTime}ms. Extracted ${parsedData.students?.length || 0} students.`);
     res.json({ success: true, data: parsedData });
   } catch (error: any) {
-    console.error('OCR Error:', error);
+    console.error(`[${requestId}] OCR Failure:`, error);
     res.status(500).json({ error: error.message || 'Failed to process marksheet photo' });
   }
 });
@@ -116,7 +147,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Campannetsmart server running on http://0.0.0.0:${PORT}`);
+    console.log(`Campannetsmart production server running on http://0.0.0.0:${PORT}`);
   });
 }
 

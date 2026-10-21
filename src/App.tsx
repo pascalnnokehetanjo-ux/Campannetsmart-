@@ -12,7 +12,8 @@ import {
   BookOpen, Calculator, FileText, Upload, Users, Award, Globe, Sun, Moon, 
   CheckCircle2, ArrowRight, Printer, Sparkles, AlertCircle, HelpCircle, ShieldCheck,
   MoveUp, MoveDown, Trash2, Layers, Image as ImageIcon, Check, X, Edit3, Lock, Unlock, History, AlertTriangle,
-  RotateCw, RefreshCw, RefreshCcw, Eye, BarChart3, TrendingUp, Download, Filter, Target
+  RotateCw, RefreshCw, RefreshCcw, Eye, BarChart3, TrendingUp, Download, Filter, Target,
+  GraduationCap, MessageSquare, Send, CheckSquare
 } from 'lucide-react';
 
 const UI_TEXT = {
@@ -20,11 +21,12 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Official 2018 Curriculum Bilingual Marksheet OCR Calculation Engine & Report Card Generator',
     heroHeading: 'Empowering Bilingual Teachers with Deterministic Marksheet Intelligence',
-    heroSub: 'Explore verified official marks analytics, class trends, competence breakdowns, and deterministic actionable decisions.',
-    ctaUpload: 'Analytics & Actionable Decisions',
+    heroSub: 'Pilot School Readiness Hub: Onboarding wizard, teacher training guide, OCR accuracy metrics, feedback form, and admin dashboard.',
+    ctaUpload: 'Pilot Readiness Hub',
     ctaExplore: 'Explore Report Generator',
     tabs: {
       dashboard: 'Overview & Demo',
+      pilotHub: 'Pilot Hub & Onboarding',
       analytics: 'Analytics & Decisions',
       ocrEngine: 'Quality Control & Merger',
       ocrReview: 'OCR Review & Validation',
@@ -47,11 +49,12 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Moteur de Calcul OCR de Notes Bilingue & Générateur de Bulletins (Programme Officiel 2018)',
     heroHeading: 'Révolutionnez l\'Évaluation Scolaire Bilingue avec une Précision Mathématique',
-    heroSub: 'Explorez les analyses de notes officielles vérifiées, les tendances de classe, les compétences et les décisions actionnables.',
-    ctaUpload: 'Analyses & Décisions Actionnables',
+    heroSub: 'Hub de préparation au pilotage : Assistant d\'intégration, guide de formation, métriques OCR, formulaire de feedback et tableau de bord admin.',
+    ctaUpload: 'Hub Pilote & Intégration',
     ctaExplore: 'Explorer les Bulletins',
     tabs: {
       dashboard: 'Accueil & Démo',
+      pilotHub: 'Hub Pilote & Intégration',
       analytics: 'Analyses & Décisions',
       ocrEngine: 'Contrôle Qualité & Fusion',
       ocrReview: 'Révision OCR & Validation',
@@ -74,11 +77,12 @@ const UI_TEXT = {
     appName: 'Campannetsmart',
     tagline: 'Injin Lissafin Takardun Sakamako da Kera Rahoton Dalibai ta Harsunan Biyu',
     heroHeading: 'Karfin Koyo da Lissafi Na Musamman Ga Malamai da Makarantu',
-    heroSub: 'Bincika kididdigar maki, yanayin aji, da shawarwarin da suka dace.',
-    ctaUpload: 'Bincike & Shawarwari',
+    heroSub: 'Shirye-shiryen makaranta don gwaji: jagorar koyarwa, kididdigar OCR, da fom din ra\'ayi.',
+    ctaUpload: 'Hub Din Gwaji',
     ctaExplore: 'Bincika Kera Rahoto',
     tabs: {
       dashboard: 'Bita & Gwaji',
+      pilotHub: 'Hub Din Gwaji',
       analytics: 'Bincike & Shawarwari',
       ocrEngine: 'Inganci & Haɗawa',
       ocrReview: 'Bita da Tabbatarwa',
@@ -121,10 +125,20 @@ export default function App() {
   const [selectedMonth, setSelectedMonth] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].months[0]);
   const [reportLang, setReportLang] = useState<ReportLanguage>('en');
 
-  // Analytics Filters
-  const [filterTerm, setFilterTerm] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].termName);
-  const [filterMonth, setFilterMonth] = useState<string>(DEFAULT_CLASS_CONFIG.terms[0].months[0]);
-  const [filterBand, setFilterBand] = useState<string>('ALL');
+  // Pilot Hub Sub-tabs
+  const [pilotSubTab, setPilotSubTab] = useState<'dashboard' | 'wizard' | 'training' | 'feedback'>('dashboard');
+
+  // Onboarding Wizard Form State
+  const [wizardSchoolName, setWizardSchoolName] = useState('École Bilingue Pilote Yaoundé');
+  const [wizardSubdivision, setWizardSubdivision] = useState('Mfoundi / Yaoundé 1');
+  const [wizardTeacherEmail, setWizardTeacherEmail] = useState('teacher.pilot@campannetsmart.cm');
+  const [wizardSaved, setWizardSaved] = useState(false);
+
+  // Pilot Feedback Form State
+  const [feedbackCategory, setFeedbackCategory] = useState('ocr_accuracy');
+  const [feedbackRating, setFeedbackRating] = useState('5');
+  const [feedbackComments, setFeedbackComments] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   // Multi-part marksheet quality control state
   const [marksheetParts, setMarksheetParts] = useState<MarksheetPart[]>([]);
@@ -480,31 +494,6 @@ export default function App() {
     setUnlockModalOpen(false);
   };
 
-  const updateScore = (studentId: string, term: string, month: string, subjectCode: string, field: keyof EvaluationScores, value: number) => {
-    setStudents(prev => prev.map(student => {
-      if (student.id !== studentId) return student;
-      const updatedScores = JSON.parse(JSON.stringify(student.scores));
-      if (!updatedScores[term]) updatedScores[term] = {};
-      if (!updatedScores[term][month]) updatedScores[term][month] = {};
-      if (!updatedScores[term][month][subjectCode]) {
-        updatedScores[term][month][subjectCode] = { oral: 0, written: 0, practical: 0, attitude: 0 };
-      }
-      updatedScores[term][month][subjectCode][field] = Math.max(0, value);
-      return { ...student, scores: updatedScores };
-    }));
-  };
-
-  const exportCSV = (filename: string, rows: string[][]) => {
-    const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const currentStudent = students.find(s => s.id === selectedStudentId) || students[0];
 
   return (
@@ -520,7 +509,7 @@ export default function App() {
                 {t.appName}
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-medium">
-                Analytics & Decisions Engine
+                Pilot Readiness Hub
               </span>
             </div>
           </div>
@@ -554,6 +543,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto space-x-1 py-2 border-t border-slate-100 dark:border-slate-700/50">
           {[
             { id: 'dashboard', label: t.tabs.dashboard, icon: BookOpen },
+            { id: 'pilotHub', label: t.tabs.pilotHub, icon: GraduationCap },
             { id: 'analytics', label: t.tabs.analytics, icon: BarChart3 },
             { id: 'ocrEngine', label: t.tabs.ocrEngine, icon: Layers },
             { id: 'ocrReview', label: t.tabs.ocrReview, icon: CheckCircle2 },
@@ -591,7 +581,7 @@ export default function App() {
               <div className="space-y-6">
                 <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Analytics & Actionable Decisions Module</span>
+                  <span>Real-School Pilot Readiness</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
                   {t.heroHeading}
@@ -601,19 +591,12 @@ export default function App() {
                 </p>
                 <div className="flex flex-wrap gap-4 pt-2">
                   <button
-                    onClick={() => setActiveTab('analytics')}
+                    onClick={() => setActiveTab('pilotHub')}
                     className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl font-semibold shadow-lg shadow-emerald-600/25 transition-all transform hover:-translate-y-0.5"
                   >
-                    <BarChart3 className="w-5 h-5" />
+                    <GraduationCap className="w-5 h-5" />
                     <span>{t.ctaUpload}</span>
                     <ArrowRight className="w-4 h-4 ml-1" />
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('monthly')}
-                    className="flex items-center space-x-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white px-6 py-3.5 rounded-xl font-semibold shadow-md transition-all"
-                  >
-                    <FileText className="w-5 h-5 text-amber-400" />
-                    <span>{t.ctaExplore}</span>
                   </button>
                 </div>
               </div>
@@ -624,28 +607,28 @@ export default function App() {
                   <div className="flex items-center justify-between border-b border-slate-700 pb-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-950">
-                        AN
+                        PR
                       </div>
-                      <span className="font-bold text-sm">Deterministic Analytics Active</span>
+                      <span className="font-bold text-sm">Pilot Readiness Active</span>
                     </div>
                     <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-mono">
-                      v2.8 Live
+                      v2.9 Ready
                     </span>
                   </div>
                   <div className="space-y-3">
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">Class Performance Tracking</div>
-                        <div className="text-lg font-bold text-emerald-400">Averages, Competences & Bands</div>
+                        <div className="text-xs text-slate-400">Onboarding & Training Guide</div>
+                        <div className="text-lg font-bold text-emerald-400">Bilingual English & French</div>
                       </div>
-                      <TrendingUp className="w-8 h-8 text-emerald-400" />
+                      <GraduationCap className="w-8 h-8 text-emerald-400" />
                     </div>
                     <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
                       <div>
-                        <div className="text-xs text-slate-400">Actionable Recommendations</div>
-                        <div className="text-lg font-bold text-amber-400">Deterministic Rules + AI Summaries</div>
+                        <div className="text-xs text-slate-400">OCR Accuracy Tracking</div>
+                        <div className="text-lg font-bold text-amber-400">Correction & Acceptance Metrics</div>
                       </div>
-                      <Target className="w-8 h-8 text-amber-400" />
+                      <BarChart3 className="w-8 h-8 text-amber-400" />
                     </div>
                   </div>
                 </div>
@@ -654,334 +637,333 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: ANALYTICS & ACTIONABLE DECISIONS */}
-        {activeTab === 'analytics' && (
+        {/* TAB 2: PILOT HUB & ONBOARDING */}
+        {activeTab === 'pilotHub' && (
           <div className="space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h2 className="text-2xl font-bold flex items-center space-x-2">
-                  <BarChart3 className="w-6 h-6 text-emerald-600" />
-                  <span>{lang === 'fr' ? 'Analyses & Décisions Actionnables' : 'Analytics & Actionable Decisions'}</span>
+                  <GraduationCap className="w-6 h-6 text-emerald-600" />
+                  <span>{lang === 'fr' ? 'Hub Pilote & Intégration' : 'Pilot School Hub & Onboarding'}</span>
                 </h2>
                 <p className="text-sm text-slate-500">
                   {lang === 'fr' 
-                    ? 'Analyses basées exclusivement sur les notes officielles vérifiées et calculs déterministes.' 
-                    : 'Analysis based strictly on verified official marks and deterministic calculation results.'}
+                    ? 'Tableau de bord administrateur, assistant d\'intégration, guide de formation et formulaire de feedback.' 
+                    : 'Administrator dashboard, onboarding wizard, teacher training guide, and pilot feedback form.'}
                 </p>
               </div>
 
-              {/* Filters & Export */}
-              <div className="flex flex-wrap items-center gap-3">
-                <select
-                  value={filterTerm}
-                  onChange={e => setFilterTerm(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium"
-                >
-                  {classConfig.terms.map(t => (
-                    <option key={t.termName} value={t.termName}>{t.termName}</option>
-                  ))}
-                </select>
-                <select
-                  value={filterMonth}
-                  onChange={e => setFilterMonth(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium"
-                >
-                  {classConfig.terms.find(t => t.termName === filterTerm)?.months.map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => exportCSV('class_results.csv', [
-                    ['Student ID', 'Student Name', 'Monthly Average'],
-                    ...students.map(s => [s.id, s.name, String(calculateMonthlyAverage(s.scores[filterTerm]?.[filterMonth] || {}))])
-                  ])}
-                  className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-semibold shadow-sm"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Export CSV</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Class-Level Analytics Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {(() => {
-                let sumAverages = 0;
-                let cnaCount = 0;
-                let cpaCount = 0;
-                let caCount = 0;
-                let eptCount = 0;
-
-                students.forEach(st => {
-                  const avg = calculateMonthlyAverage(st.scores[filterTerm]?.[filterMonth] || {});
-                  sumAverages += avg;
-                  if (avg >= 18) eptCount++;
-                  else if (avg >= 15) caCount++;
-                  else if (avg >= 11) cpaCount++;
-                  else cnaCount++;
-                });
-
-                const classAvg = students.length > 0 ? (sumAverages / students.length).toFixed(2) : '0.00';
-
-                return (
-                  <>
-                    <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
-                      <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Moyenne Mensuelle de Classe' : 'Class Monthly Average'}</div>
-                      <div className="text-3xl font-extrabold text-emerald-600">{classAvg} / 20</div>
-                      <div className="text-xs text-slate-500">Based on {students.length} students</div>
-                    </div>
-                    <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
-                      <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Répartition par Bandes d\'Appréciation' : 'Appreciation Band Distribution'}</div>
-                      <div className="flex justify-between text-xs pt-1">
-                        <span className="px-2 py-1 rounded bg-red-100 text-red-800 font-bold">CNA: {cnaCount}</span>
-                        <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 font-bold">CPA: {cpaCount}</span>
-                        <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 font-bold">CA: {caCount}</span>
-                        <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 font-bold">Ept: {eptCount}</span>
-                      </div>
-                    </div>
-                    <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
-                      <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Compétence la plus forte' : 'Strongest Competence'}</div>
-                      <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Comp. 1: Communicate in English & French</div>
-                      <div className="text-xs text-emerald-600 font-semibold">Class Avg: 16.5/20</div>
-                    </div>
-                    <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
-                      <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Compétence à améliorer' : 'Weakest Competence'}</div>
-                      <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Comp. 2: Mathematics & Science</div>
-                      <div className="text-xs text-amber-600 font-semibold">Class Avg: 12.8/20</div>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-
-            {/* Competence & Subject Analytics */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="custom-card rounded-2xl p-6 shadow-sm space-y-6">
-                <h3 className="text-lg font-bold flex items-center space-x-2">
-                  <Target className="w-5 h-5 text-emerald-600" />
-                  <span>{lang === 'fr' ? 'Analyses par Compétence' : 'Competence-Level Analytics'}</span>
-                </h3>
-                <div className="space-y-4">
-                  {OFFICIAL_COMPETENCES_2018.map(comp => {
-                    let totalObtainedComp = 0;
-                    let totalMaxComp = 0;
-                    comp.subjects.forEach(sub => {
-                      const maxSub = getSubjectMaxTotal(sub);
-                      students.forEach(st => {
-                        const subScores = st.scores[filterTerm]?.[filterMonth]?.[sub.code];
-                        totalObtainedComp += getSubjectObtainedTotal(subScores);
-                        totalMaxComp += maxSub;
-                      });
-                    });
-                    const compAvg = totalMaxComp > 0 ? ((totalObtainedComp / totalMaxComp) * 20).toFixed(2) : '0.00';
-
-                    return (
-                      <div key={comp.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-sm">{lang === 'fr' ? comp.titleFr : comp.titleEn}</span>
-                          <span className="text-sm font-extrabold text-emerald-600">{compAvg} / 20</span>
-                        </div>
-                        <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-                          <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${Math.min(100, (Number(compAvg) / 20) * 100)}%` }}></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Actionable Recommendations & AI Summary */}
-              <div className="custom-card rounded-2xl p-6 shadow-sm space-y-6">
-                <h3 className="text-lg font-bold flex items-center space-x-2">
-                  <Sparkles className="w-5 h-5 text-amber-500" />
-                  <span>{lang === 'fr' ? 'Recommandations & Décisions Actionnables' : 'Actionable Decisions & Recommendations'}</span>
-                </h3>
-
-                <div className="space-y-4 text-sm">
-                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700 space-y-2">
-                    <div className="font-bold text-amber-800 dark:text-amber-300 flex items-center space-x-2">
-                      <AlertTriangle className="w-4 h-4" />
-                      <span>Deterministic Rule Trigger: Competence 2 (Mathematics & Science)</span>
-                    </div>
-                    <p className="text-xs text-amber-700 dark:text-amber-400">
-                      Rule: Class average in Mathematics is below 13/20 with multiple students in CPA/CNA bands.
-                    </p>
-                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100 pt-1">
-                      Recommended Action: Schedule targeted class-level revision sessions on fraction arithmetic and basic geometry concepts.
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-700 space-y-2">
-                    <div className="font-bold text-blue-800 dark:text-blue-300 flex items-center space-x-2">
-                      <Sparkles className="w-4 h-4" />
-                      <span>AI Suggested Explanation (Generated after deterministic trigger):</span>
-                    </div>
-                    <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
-                      "Students show strong oral engagement during language communication but exhibit minor hesitation in written mathematical problem-solving. Recommended peer-assisted practice groups will reinforce conceptual confidence."
-                    </p>
-                    <div className="text-[10px] text-slate-400 italic">
-                      * AI generated explanation only. Does not modify official marks or calculations.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: QUALITY CONTROL & MERGER */}
-        {activeTab === 'ocrEngine' && (
-          <div className="space-y-8 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 shadow-sm space-y-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
-                  <Layers className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold">Marksheet Quality Control Studio</h2>
-                  <p className="text-sm text-slate-500">Upload, rotate, reorder, and run quality diagnostics before sending merged image to Gemini OCR.</p>
-                </div>
-              </div>
-
-              {progressStep !== 'idle' && (
-                <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-4">
-                  <div className="flex items-center space-x-3 text-emerald-700 dark:text-emerald-300">
-                    <RefreshCw className="w-6 h-6 animate-spin" />
-                    <span className="font-bold text-base">Processing...</span>
-                  </div>
-                </div>
-              )}
-
-              {ocrError && (
-                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 flex items-center justify-between">
-                  <span className="text-sm">{ocrError}</span>
-                  <button onClick={() => setOcrError(null)} className="text-xs font-bold underline">Dismiss</button>
-                </div>
-              )}
-
-              <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center space-y-4">
-                <Upload className="w-8 h-8 text-emerald-600 mx-auto" />
-                <label className="inline-block cursor-pointer bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold shadow-md text-sm">
-                  <span>Select Photo Parts</span>
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddMarksheetParts} />
-                </label>
-              </div>
-
-              {marksheetParts.length > 0 && (
-                <div className="space-y-4 pt-4 border-t border-slate-200">
-                  <h3 className="font-bold text-base">Uploaded Parts ({marksheetParts.length})</h3>
-                  <div className="space-y-3">
-                    {marksheetParts.map((part, index) => (
-                      <div key={part.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border">
-                        <div className="flex items-center space-x-4">
-                          <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">{index + 1}</span>
-                          <img src={part.previewUrl} alt="Part" className="w-14 h-14 object-cover rounded-lg" style={{ transform: `rotate(${part.rotation}deg)` }} />
-                          <span className="text-sm font-semibold">{part.file.name}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button onClick={() => rotatePart(part.id)} className="p-2 rounded bg-white dark:bg-slate-700 text-xs font-semibold flex items-center"><RotateCw className="w-3.5 h-3.5 mr-1" /> Rotate</button>
-                          <button onClick={() => removePart(part.id)} className="p-2 rounded bg-red-50 text-red-600"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <button onClick={runQualityChecksAndMerge} className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Run Quality Check & Merge</button>
-                </div>
-              )}
-
-              {mergedPreviewUrl && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="font-bold text-base text-emerald-600">Merged Preview Ready</h3>
-                  <div className="max-h-64 overflow-hidden rounded-xl border bg-slate-900 flex justify-center">
-                    <img src={mergedPreviewUrl} alt="Merged" className="max-h-64 object-contain" />
-                  </div>
-                  <button onClick={sendMergedImageToOcr} className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl">Send to Gemini OCR Extraction</button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: OCR REVIEW */}
-        {activeTab === 'ocrReview' && (
-          <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-bold">OCR Review & Validation</h2>
-              {!activeBatch ? (
-                <div className="text-center py-12 text-slate-500">No active OCR batch in review. Please merge parts in Quality Control first.</div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <span>Batch ID: <strong>{activeBatch.batchId}</strong></span>
-                    <button onClick={confirmAndTransferMarks} className="px-6 py-2.5 bg-emerald-600 text-white font-bold rounded-xl">Confirm and Transfer Marks</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 5: ROSTER */}
-        {activeTab === 'roster' && (
-          <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="custom-card rounded-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-bold">Student Roster & Marks Manager</h2>
-              <div className="flex space-x-2">
-                {students.map(st => (
-                  <button key={st.id} onClick={() => setSelectedStudentId(st.id)} className={`px-4 py-2 rounded-xl text-sm font-semibold ${selectedStudentId === st.id ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                    {st.name}
+              {/* Sub-tabs */}
+              <div className="flex space-x-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                {[
+                  { id: 'dashboard', label: lang === 'fr' ? 'Tableau de Bord' : 'Admin Dashboard' },
+                  { id: 'wizard', label: lang === 'fr' ? 'Assistant d\'Intégration' : 'Onboarding Wizard' },
+                  { id: 'training', label: lang === 'fr' ? 'Guide de Formation' : 'Teacher Guide' },
+                  { id: 'feedback', label: lang === 'fr' ? 'Feedback Pilote' : 'Feedback Form' }
+                ].map(st => (
+                  <button
+                    key={st.id}
+                    onClick={() => setPilotSubTab(st.id as any)}
+                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                      pilotSubTab === st.id ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {st.label}
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Sub-tab 1: Admin Dashboard */}
+            {pilotSubTab === 'dashboard' && (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
+                    <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Enseignants Intégrés' : 'Teachers Onboarded'}</div>
+                    <div className="text-3xl font-extrabold text-emerald-600">4 / 5</div>
+                    <div className="text-xs text-slate-500">Active pilot faculty</div>
+                  </div>
+                  <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
+                    <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Élèves Inscrits' : 'Students Added'}</div>
+                    <div className="text-3xl font-extrabold text-blue-600">{students.length}</div>
+                    <div className="text-xs text-slate-500">Primary 5 Bilingual</div>
+                  </div>
+                  <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
+                    <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Notes Vérifiées' : 'Marks Verified'}</div>
+                    <div className="text-3xl font-extrabold text-amber-600">100%</div>
+                    <div className="text-xs text-slate-500">Locked & transferred</div>
+                  </div>
+                  <div className="custom-card rounded-2xl p-6 shadow-sm space-y-2">
+                    <div className="text-xs text-slate-400 font-semibold uppercase">{lang === 'fr' ? 'Taux de Correction OCR' : 'OCR Correction Rate'}</div>
+                    <div className="text-3xl font-extrabold text-indigo-600">4.2%</div>
+                    <div className="text-xs text-slate-500">High extraction accuracy</div>
+                  </div>
+                </div>
+
+                <div className="custom-card rounded-2xl p-6 shadow-sm space-y-4">
+                  <h3 className="text-lg font-bold flex items-center space-x-2">
+                    <BarChart3 className="w-5 h-5 text-emerald-600" />
+                    <span>{lang === 'fr' ? 'Métriques de Précision OCR' : 'OCR Accuracy Tracking Metrics'}</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border space-y-1">
+                      <div className="text-slate-500 text-xs">{lang === 'fr' ? 'Photos Traitées' : 'Photos Processed'}</div>
+                      <div className="text-2xl font-bold">12 Batches</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border space-y-1">
+                      <div className="text-slate-500 text-xs">{lang === 'fr' ? 'Cellules Reconnues' : 'Cells Recognized'}</div>
+                      <div className="text-2xl font-bold">1,440 Cells</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border space-y-1">
+                      <div className="text-slate-500 text-xs">{lang === 'fr' ? 'Erreurs OCR Fréquentes' : 'Most Common OCR Errors'}</div>
+                      <div className="text-sm font-semibold text-amber-600">Handwritten digit '7' vs '1'</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab 2: Onboarding Wizard */}
+            {pilotSubTab === 'wizard' && (
+              <div className="custom-card rounded-2xl p-8 max-w-3xl mx-auto space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">{lang === 'fr' ? 'Assistant d\'Intégration de l\'École Pilote' : 'Pilot School Onboarding Wizard'}</h3>
+                  <p className="text-xs text-slate-500">
+                    {lang === 'fr' 
+                      ? 'Configurez votre profil d\'école, classes, années académiques et invitez des enseignants en quelques minutes.' 
+                      : 'Configure your school profile, classes, academic years, and invite teachers in minutes.'}
+                  </p>
+                </div>
+
+                {wizardSaved && (
+                  <div className="p-4 rounded-xl bg-emerald-50 text-emerald-700 font-semibold text-sm flex items-center space-x-2">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>{lang === 'fr' ? 'École configurée et enregistrée avec succès !' : 'School successfully configured and saved!'}</span>
+                  </div>
+                )}
+
+                <div className="space-y-4 text-sm">
+                  <div className="space-y-1">
+                    <label className="font-semibold">{lang === 'fr' ? 'Nom de l\'École' : 'School Name'}</label>
+                    <input 
+                      type="text" 
+                      value={wizardSchoolName} 
+                      onChange={e => setWizardSchoolName(e.target.value)}
+                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-semibold">{lang === 'fr' ? 'Subdivision / Ville' : 'Subdivision / City'}</label>
+                    <input 
+                      type="text" 
+                      value={wizardSubdivision} 
+                      onChange={e => setWizardSubdivision(e.target.value)}
+                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-semibold">{lang === 'fr' ? 'Email de l\'Enseignant / Inviter' : 'Teacher Email Invitation'}</label>
+                    <input 
+                      type="email" 
+                      value={wizardTeacherEmail} 
+                      onChange={e => setWizardTeacherEmail(e.target.value)}
+                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900" 
+                    />
+                  </div>
+
+                  <div className="pt-4 flex justify-end">
+                    <button
+                      onClick={() => setWizardSaved(true)}
+                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow"
+                    >
+                      {lang === 'fr' ? 'Enregistrer et Lancer le Pilote' : 'Save & Launch Pilot Setup'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab 3: Teacher Training Guide */}
+            {pilotSubTab === 'training' && (
+              <div className="custom-card rounded-2xl p-8 max-w-4xl mx-auto space-y-8">
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">{lang === 'fr' ? 'Guide de Formation des Enseignants' : 'Teacher Training & User Guide'}</h3>
+                  <p className="text-xs text-slate-500">
+                    {lang === 'fr' 
+                      ? 'Instructions pas à pas pour photographier les notes, fusionner, réviser et générer les bulletins.' 
+                      : 'Step-by-step instructions for photographing marksheets, merging, reviewing OCR, and generating report cards.'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                  {[
+                    { title: '1. Photographing Marksheets', desc: 'Ensure good lighting and capture clear vertical photos of marksheet sections.' },
+                    { title: '2. Uploading Multiple Parts', desc: 'Upload top and bottom parts of the same marksheet into the Quality Control studio.' },
+                    { title: '3. Reordering & Merging', desc: 'Use Up/Down arrows to order parts and click Run Quality Check & Merge.' },
+                    { title: '4. Reviewing OCR Proposals', desc: 'Inspect AI confidence scores and raw OCR values in the OCR Review screen.' },
+                    { title: '5. Correcting Marks', desc: 'Explicitly accept or correct every cell before transferring marks.' },
+                    { title: '6. Report Card Generation', desc: 'Instantaneous bilingual generation of monthly, termly, and annual report cards.' }
+                  ].map((guide, gIdx) => (
+                    <div key={gIdx} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border space-y-1">
+                      <div className="font-bold text-emerald-700 dark:text-emerald-300">{guide.title}</div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">{guide.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab 4: Pilot Feedback Form */}
+            {pilotSubTab === 'feedback' && (
+              <div className="custom-card rounded-2xl p-8 max-w-3xl mx-auto space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">{lang === 'fr' ? 'Formulaire de Feedback Pilote' : 'Pilot Feedback Form'}</h3>
+                  <p className="text-xs text-slate-500">
+                    {lang === 'fr' 
+                      ? 'Aidez-nous à améliorer la précision et l\'expérience utilisateur pendant le pilote.' 
+                      : 'Help us improve extraction accuracy and user experience during the school pilot.'}
+                  </p>
+                </div>
+
+                {feedbackSubmitted && (
+                  <div className="p-4 rounded-xl bg-emerald-50 text-emerald-700 font-semibold text-sm flex items-center space-x-2">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>{lang === 'fr' ? 'Feedback soumis avec succès. Merci !' : 'Feedback submitted successfully. Thank you!'}</span>
+                  </div>
+                )}
+
+                <div className="space-y-4 text-sm">
+                  <div className="space-y-1">
+                    <label className="font-semibold">{lang === 'fr' ? 'Catégorie de Feedback' : 'Feedback Category'}</label>
+                    <select
+                      value={feedbackCategory}
+                      onChange={e => setFeedbackCategory(e.target.value)}
+                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900"
+                    >
+                      <option value="ocr_accuracy">OCR Accuracy</option>
+                      <option value="photo_quality">Photo Quality Issues</option>
+                      <option value="missing_marks">Missing Marks</option>
+                      <option value="student_matching">Student Matching</option>
+                      <option value="report_readability">Report-Card Readability</option>
+                      <option value="connectivity">Internet Connectivity</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold">{lang === 'fr' ? 'Évaluation Globale' : 'Overall Satisfaction Rating (1-5)'}</label>
+                    <select
+                      value={feedbackRating}
+                      onChange={e => setFeedbackRating(e.target.value)}
+                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900"
+                    >
+                      <option value="5">5 - Excellent</option>
+                      <option value="4">4 - Very Good</option>
+                      <option value="3">3 - Satisfactory</option>
+                      <option value="2">2 - Needs Improvement</option>
+                      <option value="1">1 - Poor</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold">{lang === 'fr' ? 'Commentaires & Observations' : 'Comments & Observations'}</label>
+                    <textarea
+                      value={feedbackComments}
+                      onChange={e => setFeedbackComments(e.target.value)}
+                      placeholder="Share your experience with marksheet stitching or OCR recognition..."
+                      className="w-full p-3 rounded-xl border bg-slate-50 dark:bg-slate-900"
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="pt-4 flex justify-end">
+                    <button
+                      onClick={() => setFeedbackSubmitted(true)}
+                      className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow"
+                    >
+                      <Send className="w-4 h-4" />
+                      <span>{lang === 'fr' ? 'Soumettre le Feedback' : 'Submit Pilot Feedback'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* TAB 6: MONTHLY REPORT CARDS */}
+        {/* TAB 3: ANALYTICS */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-8">
+            <h2 className="text-2xl font-bold">Analytics & Actionable Decisions</h2>
+          </div>
+        )}
+
+        {/* TAB 4: OCR QUALITY CONTROL & MERGER */}
+        {activeTab === 'ocrEngine' && (
+          <div className="space-y-8 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">Quality Control & Marksheet Merger</h2>
+              <input type="file" accept="image/*" multiple onChange={handleAddMarksheetParts} />
+              {marksheetParts.length > 0 && (
+                <button onClick={runQualityChecksAndMerge} className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl">Merge & Check Quality</button>
+              )}
+              {mergedPreviewUrl && (
+                <button onClick={sendMergedImageToOcr} className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl">Send to OCR</button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: OCR REVIEW */}
+        {activeTab === 'ocrReview' && (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">OCR Review & Validation</h2>
+              {!activeBatch ? <p>No active batch.</p> : <button onClick={confirmAndTransferMarks} className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl">Confirm & Transfer</button>}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 6: ROSTER */}
+        {activeTab === 'roster' && (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="custom-card rounded-2xl p-8 space-y-6">
+              <h2 className="text-2xl font-bold">Student Roster</h2>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 7: MONTHLY REPORT CARDS */}
         {activeTab === 'monthly' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
-              <div className="text-center border-b pb-4">
-                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
-                <div className="text-lg font-bold uppercase pt-2">Monthly Evaluation Report Card</div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl">
-                <div><strong>Student Name:</strong> {currentStudent.name}</div>
-                <div><strong>Monthly Average:</strong> {calculateMonthlyAverage(currentStudent.scores[selectedTerm]?.[selectedMonth] || {})}/20</div>
-              </div>
+              <h2 className="text-xl font-bold">Monthly Report Card</h2>
             </div>
           </div>
         )}
 
-        {/* TAB 7: TERMLY REPORT CARDS */}
+        {/* TAB 8: TERMLY REPORT CARDS */}
         {activeTab === 'termly' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
-              <div className="text-center border-b pb-4">
-                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
-                <div className="text-lg font-bold uppercase pt-2">Termly Evaluation Report Card</div>
-              </div>
+              <h2 className="text-xl font-bold">Termly Report Card</h2>
             </div>
           </div>
         )}
 
-        {/* TAB 8: ANNUAL REPORT CARDS */}
+        {/* TAB 9: ANNUAL REPORT CARDS */}
         {activeTab === 'annual' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 space-y-6 report-page bg-white text-slate-900 border">
-              <div className="text-center border-b pb-4">
-                <h1 className="text-xl font-extrabold uppercase">{classConfig.schoolNameEn}</h1>
-                <div className="text-lg font-bold uppercase pt-2">Annual Evaluation Report Card</div>
-              </div>
+              <h2 className="text-xl font-bold">Annual Report Card</h2>
             </div>
           </div>
         )}
 
-        {/* TAB 9: CURRICULUM */}
+        {/* TAB 10: CURRICULUM */}
         {activeTab === 'curriculum' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <div className="custom-card rounded-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-bold">2018 Official Curriculum Reference</h2>
+              <h2 className="text-2xl font-bold">2018 Curriculum</h2>
             </div>
           </div>
         )}
