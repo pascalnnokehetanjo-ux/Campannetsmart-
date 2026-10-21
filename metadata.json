@@ -1,0 +1,6 @@
+{
+  "name": "Campannetsmart",
+  "description": "Bilingual Marksheet OCR Calculation Engine and Official Report Card Generator (Monthly, Termly, Annual) based on 2018 Curriculum.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
